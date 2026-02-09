@@ -6,7 +6,7 @@ class Database {
 
     private $host = 'db';
     private $user = 'root';
-    private $pass = 'root'; // In production, use environment variables
+    private $pass = 'root';
     private $name = 'proyecto_dual';
 
     private function __construct() {
@@ -21,7 +21,6 @@ class Database {
             $this->conn = new PDO($dsn, $this->user, $this->pass, $options);
             
         } catch (PDOException $e) {
-            // Log error instead of leaking it to the user in production
             error_log("Database Connection Error: " . $e->getMessage());
             die("Error de conexión a la base de datos.");
         }
@@ -37,8 +36,7 @@ class Database {
     public function getConnection() {
         return $this->conn;
     }
-    
-    // Prevent cloning and unserializing
+
     private function __clone() {}
     public function __wakeup() {}
 }

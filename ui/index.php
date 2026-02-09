@@ -1,4 +1,14 @@
 <?php
+require_once __DIR__ . '/../motor/db.php';
+
+
+try {
+    $db = Database::getInstance();
+    echo "Conexión establecida correctamente desde la carpeta UI";
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
+
 $servername = "db";
 $username = "root";
 $password = "root";
