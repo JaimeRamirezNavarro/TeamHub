@@ -7,11 +7,10 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html
-      - ./apache-config.conf:/etc/apache2/sites-available/000-default.conf
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html/ui
     command: >
-      bash -c "docker-php-ext-install mysqli pdo_mysql && apache2-foreground"
+      bash -c "sed -ri -e 's!/var/www/html!/var/www/html/ui!g' /etc/apache2/sites-available/*.conf && sed -ri -e 's!/var/www/!/var/www/html/ui!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf && docker-php-ext-install mysqli pdo_mysql && apache2-foreground"
 
   db:
     image: mysql:8.0
