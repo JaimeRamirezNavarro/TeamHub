@@ -21,6 +21,12 @@ class Consultas {
         return false;
     }
 
+    public function obtenerUsuario($id) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
     public function registrarUsuario($username, $email, $password) {
         // Verificar si el email ya existe
         $stmt = $this->db->prepare("SELECT id FROM users WHERE email = ?");
@@ -41,6 +47,18 @@ class Consultas {
         $query = $this->db->query("SELECT * FROM teams");
         return $query ? $query->fetchAll() : [];
     }
+
+    public function obtenerEquipo($id) {
+        $stmt = $this->db->prepare("SELECT * FROM teams WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
+    public function actualizarEstadoEquipo($team_id, $status) {
+        $stmt = $this->db->prepare("UPDATE teams SET status = ? WHERE id = ?");
+        return $stmt->execute([$status, $team_id]);
+    }
+
     
     public function unirseEquipo($user_id, $team_id) {
         if ($this->esMiembro($user_id, $team_id)) return false;
@@ -54,14 +72,31 @@ class Consultas {
     }
     
     public function esMiembro($user_id, $team_id) {
+        if ($this->esGlobalAdmin($user_id)) return true;
+        
         $stmt = $this->db->prepare("SELECT 1 FROM team_members WHERE user_id = ? AND team_id = ?");
         $stmt->execute([$user_id, $team_id]);
         return (bool) $stmt->fetch();
     }
+
+    public function obtenerRolUsuario($user_id, $team_id) {
+        if ($this->esGlobalAdmin($user_id)) return 'admin'; // Ghost Admin is always admin
+
+        $stmt = $this->db->prepare("SELECT role FROM team_members WHERE user_id = ? AND team_id = ?");
+        $stmt->execute([$user_id, $team_id]);
+        return $stmt->fetchColumn(); 
+    }
+
+    private function esGlobalAdmin($user_id) {
+        $stmt = $this->db->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->execute([$user_id]);
+        $role = $stmt->fetchColumn();
+        return $role === 'admin';
+    }
     
     public function obtenerMiembrosEquipo($team_id) {
         $stmt = $this->db->prepare("
-            SELECT u.username, u.status 
+            SELECT u.username, u.status, tm.role 
             FROM users u 
             JOIN team_members tm ON u.id = tm.user_id 
             WHERE tm.team_id = ?
