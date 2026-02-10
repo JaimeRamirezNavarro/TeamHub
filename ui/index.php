@@ -372,10 +372,10 @@ if ($selected_team_id) {
                 <form method="POST">
                     <input type="hidden" name="update_user_status" value="1">
                     <select name="new_user_status" class="status-select" onchange="this.form.submit()">
-                        <option value="Oficina" <?= $userStatus == 'Oficina' ? 'selected' : '' ?>>🏢 Oficina</option>
-                        <option value="Teletrabajo" <?= $userStatus == 'Teletrabajo' ? 'selected' : '' ?>>🏠 Teletrabajo</option>
-                        <option value="Reunión" <?= $userStatus == 'Reunión' ? 'selected' : '' ?>>📅 Reunión</option>
-                        <option value="Desconectado" <?= $userStatus == 'Desconectado' ? 'selected' : '' ?>>⚠️ Desconectado</option>
+                        <option value="Oficina" <?= $userStatus == 'Oficina' ? 'selected' : '' ?>>Oficina</option>
+                        <option value="Teletrabajo" <?= $userStatus == 'Teletrabajo' ? 'selected' : '' ?>>Teletrabajo</option>
+                        <option value="Reunión" <?= $userStatus == 'Reunión' ? 'selected' : '' ?>>Reunión</option>
+                        <option value="Desconectado" <?= $userStatus == 'Desconectado' ? 'selected' : '' ?>>Desconectado</option>
                     </select>
                 </form>
             </div>
@@ -430,7 +430,7 @@ if ($selected_team_id) {
                 <!-- Left Column: Details & Actions -->
                 <div style="display:flex; flex-direction:column; gap:30px;">
                     <div class="card">
-                        <h3>📖 Descripción del Proyecto</h3>
+                        <h3>Descripción del Proyecto</h3>
                         <div class="description-text">
                             <?= nl2br(htmlspecialchars($selected_team['description'])) ?>
                         </div>
@@ -438,7 +438,7 @@ if ($selected_team_id) {
 
                     <?php if ($user_role === 'admin'): ?>
                         <div class="card" style="border-color: #444;">
-                            <h3 style="color:var(--accent-color);">⚡ Gestión del Proyecto (Manager)</h3>
+                            <h3 style="color:var(--accent-color);">Gestión del Proyecto (Manager)</h3>
                             <p style="font-size:0.9rem; color:#aaa;">Como jefe de proyecto, puedes cambiar el estado actual.</p>
                             
                             <form method="POST" class="status-form">
