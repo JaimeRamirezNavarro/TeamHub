@@ -60,28 +60,52 @@ require_once __DIR__ . '/../motor/main.php';
 
     <h1>Dashboard de Proyectos</h1>
 
-    <?php foreach ($proyectos as $p): ?>
-        <div class="project-card">
-            <details>
-                <summary>
-                    <span><strong><?= $p['title'] ?></strong> - <?= $p['status'] ?></span>
-                </summary>
-                
-                <div class="user-list">
-                    <h4>👥 Equipo asignado:</h4>
-                    <?php foreach ($empleados as $e): ?>
-                        <div class="user-item">
-                            <span><?= $e['username'] ?></span>
-                            <span>
-                                <span class="status-dot <?= $e['status'] ?>"></span>
-                                <?= $e['status'] ?>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </details>
-        </div>
-    <?php endforeach; ?>
+    <?php if (empty($equipos)): ?>
+        <p>No hay proyectos disponibles. ¡Crea uno!</p>
+    <?php else: ?>
+        <?php foreach ($equipos as $equipo): ?>
+            <div class="project-card">
+                <?php 
+                    $esMiembro = $consultas->esMiembro($_SESSION['user_id'], $equipo['id']); 
+                    $miembros = $consultas->obtenerMiembrosEquipo($equipo['id']);
+                ?>
+                <details>
+                    <summary>
+                        <span><strong><?= htmlspecialchars($equipo['name']) ?></strong></span>
+                        
+                        <form action="../motor/main.php" method="POST" style="display:inline;">
+                            <input type="hidden" name="team_id" value="<?= $equipo['id'] ?>">
+                            <?php if ($esMiembro): ?>
+                                <span style="font-size: 0.8em; color: #4CAF50; margin-right: 10px;">(Miembro)</span>
+                                <button type="submit" name="leave_team" style="background:#ff5252; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">Salir</button>
+                            <?php else: ?>
+                                <button type="submit" name="join_team" style="background:#2196F3; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">Unirse</button>
+                            <?php endif; ?>
+                        </form>
+                    </summary>
+                    
+                    <div class="user-list">
+                        <p><em><?= htmlspecialchars($equipo['description']) ?></em></p>
+                        
+                        <?php if ($esMiembro): ?>
+                            <h4>👥 Miembros del equipo:</h4>
+                            <?php foreach ($miembros as $m): ?>
+                                <div class="user-item">
+                                    <span><?= htmlspecialchars($m['username']) ?></span>
+                                    <span>
+                                        <span class="status-dot <?= $m['status'] ?>"></span>
+                                        <?= $m['status'] ?>
+                                    </span>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p style="color: #888;">Únete al equipo para ver a los miembros y colaborar.</p>
+                        <?php endif; ?>
+                    </div>
+                </details>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
 
 </body>
 </html>
