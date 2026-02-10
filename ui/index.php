@@ -24,7 +24,7 @@ require_once __DIR__ . '/../motor/main.php';
 </head>
 <body>
 
-    <h1>🚀 Dashboard de Proyectos</h1>
+    <h1>Dashboard de Proyectos</h1>
 
     <?php if (empty($equipos)): ?>
         <p>No hay proyectos disponibles. ¡Crea uno!</p>
