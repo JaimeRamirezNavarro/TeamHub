@@ -1,8 +1,8 @@
-# 🚀 TeamHub
+# TeamHub
 
 **TeamHub** es una plataforma moderna y robusta para la gestión de proyectos y colaboración de equipos. Diseñada para ofrecer una experiencia de usuario fluida con una interfaz oscura y profesional, permite gestionar roles, estados de proyectos y disponibilidad de usuarios en tiempo real.
 
-## ✨ Características Principales
+## Características Principales
 
 -   **Gestión de Proyectos**:
     -   Visualización clara de proyectos con descripciones detalladas.
@@ -15,7 +15,7 @@
     -   **Ghost Admin (Super Usuario)**: Un rol especial oculto que tiene control total sobre todos los proyectos sin aparecer en las listas de miembros.
 
 -   **Gestión de Disponibilidad**:
-    -   Indicadores de estado de usuario en tiempo real: *🏢 Oficina, 🏠 Teletrabajo, 📅 Reunión, ⚠️ Desconectado*.
+    -   Indicadores de estado de usuario en tiempo real: *Oficina, Teletrabajo, Reunión, Desconectado*.
     -   Selector rápido de estado en la barra lateral.
 
 -   **Interfaz Moderna**:
@@ -23,7 +23,7 @@
     -   Layout responsivo con Sidebar y Panel Central.
     -   Feedback visual mediante etiquetas de colores y notificaciones.
 
-## 🛠️ Tecnologías
+## Tecnologías
 
 -   **Backend**: PHP 8.2 (Vanilla, Estructura MVC simplificada).
 -   **Base de Datos**: MySQL 8.0.
@@ -31,7 +31,7 @@
 -   **Infraestructura**: Docker & Docker Compose.
 -   **Frontend**: HTML5, CSS3 (Grid/Flexbox), PHP Templating.
 
-## 📦 Instalación y Despliegue
+## Instalación y Despliegue
 
 Este proyecto está contenerizado con Docker para facilitar su despliegue en cualquier entorno.
 
@@ -60,7 +60,7 @@ Este proyecto está contenerizado con Docker para facilitar su despliegue en cua
 4.  **Acceder a la aplicación**:
     Abre tu navegador en: [http://localhost:8080](http://localhost:8080)
 
-## 🔑 Credenciales de Prueba
+## Credenciales de Prueba
 
 El sistema viene con datos pre-cargados para probar los diferentes roles:
 
@@ -72,7 +72,7 @@ El sistema viene con datos pre-cargados para probar los diferentes roles:
 
 *(Nota: Todos los usuarios de prueba tienen la contraseña `1234` por defecto)*
 
-## 📂 Estructura del Proyecto
+## Estructura del Proyecto
 
 El código está organizado estrictamente en 3 capas:
 -   `modelo/`: Lógica de negocio, migraciones, seeds y esquema SQL.
@@ -80,4 +80,4 @@ El código está organizado estrictamente en 3 capas:
 -   `ui/`: Vistas y controladores de interfaz.
 
 ---
-Desarrollado con ❤️ por [Tu Nombre/Equipo]
+Desarrollado  por Marco Solinas Cabrera y Jaime Ramirez Navarro

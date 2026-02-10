@@ -1,71 +1,108 @@
-# EXPLICACIÓN DEL CÓDIGO - TEAMHUB
+# GUÍA DETALLADA DEL CÓDIGO - TEAMHUB
 
-Este documento detalla la estructura y el funcionamiento del código fuente de TeamHub. El proyecto sigue un patrón similar a MVC (Modelo-Vista-Controlador) simplificado para facilitar su mantenimiento y escalabilidad.
-
-## 📂 ESTRUCTURA DE CARPETAS
-
-El proyecto se divide estrictamente en 3 carpetas principales:
-
-1.  **`modelo/`**: (Logica y Datos)
-    -   Aquí reside toda la lógica de negocio y la interacción con la base de datos.
-    -   Contiene scripts de migración, semillas de datos (seeds) y la clase principal de consultas.
-
-2.  **`motor/`**: (Núcleo)
-    -   Contiene la configuración base del sistema.
-    -   Principalmente, la conexión a la base de datos (Singleton).
-
-3.  **`ui/`**: (Interfaz de Usuario)
-    -   Contiene las vistas públicas que ve el usuario (HTML/PHP).
-    -   Maneja la recepción de formularios y la presentación de datos.
+Este documento explica paso a paso cómo está construido TeamHub, para qué sirve cada archivo y cómo fluyen los datos en la aplicación.
 
 ---
 
-## 📝 ARCHIVOS CLAVE
+## 1. ESTRUCTURA DEL PROYECTO
 
-### 1. `motor/db.php`
-Este archivo maneja la conexión a MySQL usando el patrón **Singleton**.
--   **¿Por qué?** Para asegurar que solo exista UNA conexión a la base de datos por petición, ahorrando recursos.
--   Usa PDO para mayor seguridad contra inyecciones SQL.
+El proyecto está organizado en **3 carpetas principales** para mantener el orden y separar responsabilidades (Patrón MVC simplificado):
 
-### 2. `modelo/consultas.php`
-Es el "cerebro" de la aplicación. Contiene la clase `Consultas` con todos los métodos para:
--   **Autenticación**: `verificarlogin`, `registrarUsuario`.
--   **Gestión de Equipos**: `obtenerTodosLosEquipos`, `actualizarEstadoEquipo`.
--   **Roles y Permisos**:
-    -   `esMiembro($user_id, $team_id)`: Verifica si un usuario pertenece a un equipo.
-    -   `obtenerRolUsuario`: Devuelve si es 'admin' (Jefe de Proyecto) o 'member' (Trabajador).
-    -   **GHOST ADMIN**: Aquí está la lógica del "Super Admin". El método `esGlobalAdmin` verifica si el usuario tiene rol global 'admin' en la tabla `users`. Si es así, se le da acceso total y rol de 'admin' en cualquier proyecto automáticamente, aunque no esté en la tabla `team_members`.
+### `motor/` (El Núcleo)
+Aquí están los archivos de configuración base.
+*   **`db.php`**: Es el archivo más importante de esta carpeta. Maneja la conexión con la base de datos MySQL.
 
-### 3. `ui/index.php`
-El panel de control principal (Dashboard).
--   **Diseño**: Usa CSS Grid no-lineal (Sidebar a la izquierda, Contenido a la derecha).
--   **Lógica de Renderizado**:
-    -   Si eres **Admin** del proyecto seleccionado, muestra el panel de "Gestión del Proyecto" para cambiar el estado.
-    -   Si eres **Trabajador**, solo muestra la información.
-    -   Muestra la lista de miembros con sus roles y estados (Puntos de colores).
--   **Barra Lateral**: Incluye el selector de estado del usuario (Oficina, Teletrabajo, etc.) que envía una petición POST para actualizar el estado en tiempo real.
+### `modelo/` (La Lógica y Datos)
+Aquí está "el cerebro" de la aplicación. No hay HTML aquí, solo código PHP que procesa datos y habla con la base de datos.
+*   **`consultas.php`**: Contiene todas las funciones del sistema (Login, Crear usuarios, Obtener proyectos...).
+*   **`schema.sql`**: El "plano" de la base de datos (tablas y columnas).
+*   **`init_db.php`**: Un script para borrar y recrear la base de datos desde cero usando el `schema.sql`.
+*   **Scripts de Migración**: Archivos para hacer cambios en la base de datos sin borrarla (ej: `migration_ghost_admin.php`).
 
-### 4. `modelo/init_db.php`
-Script maestro de inicialización.
--   Lee el archivo `schema.sql`.
--   Resetea la base de datos.
--   Crea el usuario Admin original.
--   Se ejecuta via Docker: `docker compose exec web php modelo/init_db.php`.
+### `ui/` (La Interfaz)
+Aquí está lo que ve el usuario. Son archivos HTML mezclados con un poco de PHP para mostrar datos.
+*   **`inicio.php`**: La pantalla de Login y Registro.
+*   **`index.php`**: El panel principal (Dashboard) donde ocurre toda la acción.
 
 ---
 
-## 🚀 FLUJO DE DATOS
+## 2. CÓMO FUNCIONA LA CONEXIÓN (motor/db.php)
 
-1.  El usuario entra a `ui/inicio.php`.
-2.  Envía formulario POST.
-3.  `consultas.php` verifica credenciales en MySQL.
-4.  Si es correcto, crea una `SESSION` y redirige a `ui/index.php`.
-5.  En `index.php`, se instancia `Consultas` para pedir los proyectos y los detalles del usuario.
-6.  El HTML se renderiza dinámicamente según los datos recibidos.
+Usamos un patrón de diseño llamado **Singleton**.
 
-## 👻 NOTA SOBRE EL "GHOST ADMIN"
+**¿Qué hace?**
+Asegura que **solo exista UNA conexión abierta** a la base de datos por cada visita de un usuario.
 
-El Admin Global (`admin@teamhub.com`) es especial:
--   Tiene `role = 'admin'` en la tabla `users`.
--   **NO** existe en la tabla `team_members`. por eso no aparece en las listas de miembros UI.
--   Sin embargo, `consultas.php` intercepta sus peticiones y le otorga permisos de jefe (`admin`) en todos los contextos.
+**¿Por qué es importante?**
+Si un usuario carga la página y llamamos a la base de datos 10 veces (para ver su nombre, sus proyectos, sus tareas...), sin Singleton abriríamos 10 conexiones nuevas. Con Singleton, abrimos 1 y la reutilizamos 10 veces. Esto hace que la app sea mucho más rápida y eficiente.
+
+---
+
+## 3. LA LÓGICA DE NEGOCIO (modelo/consultas.php)
+
+Este archivo contiene la clase `Consultas`. Aquí explicamos sus funciones clave paso a paso:
+
+### A. Autenticación (`verificarlogin`)
+1.  Recibe email y contraseña.
+2.  Busca al usuario en la base de datos por email.
+3.  Si existe, compara la contraseña usando `password_verify` (o texto plano por compatibilidad).
+4.  Si coinciden, devuelve los datos del usuario.
+
+### B. Gestión de Roles (`obtenerRolUsuario` y `esMiembro`)
+Aquí es donde ocurre la magia de los permisos:
+1.  **`esMiembro($user_id, $team_id)`**:
+    *   Primero pregunta: "¿Es este usuario un Administrador Global (Ghost Admin)?".
+    *   Si SÍ -> Devuelve `true` inmediatamente (tiene acceso a todo).
+    *   Si NO -> Busca en la tabla `team_members` si el usuario pertenece al proyecto.
+
+2.  **`obtenerRolUsuario($user_id, $team_id)`**:
+    *   Pregunta: "¿Es un Administrador Global?".
+    *   Si SÍ -> Devuelve `'admin'` (Jefe de Proyecto) automáticamente.
+    *   Si NO -> Busca en la tabla `team_members` qué rol tiene asignado en ese proyecto específico.
+
+### C. El "Ghost Admin" (Administrador Fantasma)
+Este es un truco especial para el usuario `admin@teamhub.com`.
+*   En la base de datos, este usuario tiene una columna `role = 'admin'` en la tabla `users`.
+*   **IMPORTANTE**: Este usuario NO se añade a la tabla `team_members`.
+*   **Resultado**: Como no está en `team_members`, no sale en la lista de "Miembros del Equipo" (es invisible). Pero como la lógica (punto B) detecta su `role` global, el sistema le deja entrar y editar todo como si fuera el jefe.
+
+---
+
+## 4. LA INTERFAZ DE USUARIO (ui/index.php)
+
+Este es el archivo más complejo visualmente. Sigue este flujo paso a paso:
+
+### Paso 1: Verificación de Sesión
+Al principio del archivo (`session_start()`), comprueba si el usuario está logueado. Si no, lo manda a `inicio.php`.
+
+### Paso 2: Procesar Acciones (POST)
+Antes de mostrar nada, mira si el usuario ha enviado algún formulario:
+*   **`update_user_status`**: Si el usuario cambió su estado (Oficina/Teletrabajo), actualiza la base de datos y recarga la página.
+*   **`update_status`**: Si un Jefe cambió el estado de un proyecto (ej: "En Progreso" -> "Completado"), verifica permisos y lo actualiza.
+*   **`logout`**: Cierra la sesión.
+
+### Paso 3: Renderizado (Dibujar la página)
+1.  **Sidebar (Izquierda)**:
+    *   Muestra el perfil del usuario.
+    *   Genera un `<form>` con un `<select>` para cambiar el estado personal.
+    *   Lista los proyectos obtenidos con `obtenerTodosLosEquipos()`.
+
+2.  **Panel Principal (Derecha)**:
+    *   Primero verifica si hay un proyecto seleccionado (`?team_id=X`).
+    *   Si hay proyecto, carga sus datos y sus miembros.
+    *   **Lógica de Visualización**:
+        *   Muestra el Título y la Descripción.
+        *   Muestra el Estado actual con un color específico (CSS dinámico: `status-En.Progreso`, etc.).
+        *   **¿Es Admin?**: Si la función `obtenerRolUsuario` dice que sí, muestra el panel "Gestión del Proyecto" con el selector para cambiar el estado del proyecto. Si no, lo oculta.
+        *   **Lista de Miembros**: Hace un bucle `foreach` por todos los miembros y dibuja una tarjeta para cada uno, mostrando su nombre, un punto de color con su estado (Oficina/Reunión) y su rol (Jefe/Trabajador).
+
+---
+
+## 5. INICIALIZACIÓN (modelo/init_db.php)
+
+Este script es el "botón de reinicio".
+1.  Lee el archivo `modelo/schema.sql`.
+2.  Borra las tablas si existen.
+3.  Crea las tablas `users`, `teams`, `team_members`.
+4.  Inserta el usuario Administrador y algunos datos de prueba.
+5.  Es útil para empezar de cero si rompemos algo durante el desarrollo.
