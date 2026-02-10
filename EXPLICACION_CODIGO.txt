@@ -1,0 +1,71 @@
+# EXPLICACIÓN DEL CÓDIGO - TEAMHUB
+
+Este documento detalla la estructura y el funcionamiento del código fuente de TeamHub. El proyecto sigue un patrón similar a MVC (Modelo-Vista-Controlador) simplificado para facilitar su mantenimiento y escalabilidad.
+
+## 📂 ESTRUCTURA DE CARPETAS
+
+El proyecto se divide estrictamente en 3 carpetas principales:
+
+1.  **`modelo/`**: (Logica y Datos)
+    -   Aquí reside toda la lógica de negocio y la interacción con la base de datos.
+    -   Contiene scripts de migración, semillas de datos (seeds) y la clase principal de consultas.
+
+2.  **`motor/`**: (Núcleo)
+    -   Contiene la configuración base del sistema.
+    -   Principalmente, la conexión a la base de datos (Singleton).
+
+3.  **`ui/`**: (Interfaz de Usuario)
+    -   Contiene las vistas públicas que ve el usuario (HTML/PHP).
+    -   Maneja la recepción de formularios y la presentación de datos.
+
+---
+
+## 📝 ARCHIVOS CLAVE
+
+### 1. `motor/db.php`
+Este archivo maneja la conexión a MySQL usando el patrón **Singleton**.
+-   **¿Por qué?** Para asegurar que solo exista UNA conexión a la base de datos por petición, ahorrando recursos.
+-   Usa PDO para mayor seguridad contra inyecciones SQL.
+
+### 2. `modelo/consultas.php`
+Es el "cerebro" de la aplicación. Contiene la clase `Consultas` con todos los métodos para:
+-   **Autenticación**: `verificarlogin`, `registrarUsuario`.
+-   **Gestión de Equipos**: `obtenerTodosLosEquipos`, `actualizarEstadoEquipo`.
+-   **Roles y Permisos**:
+    -   `esMiembro($user_id, $team_id)`: Verifica si un usuario pertenece a un equipo.
+    -   `obtenerRolUsuario`: Devuelve si es 'admin' (Jefe de Proyecto) o 'member' (Trabajador).
+    -   **GHOST ADMIN**: Aquí está la lógica del "Super Admin". El método `esGlobalAdmin` verifica si el usuario tiene rol global 'admin' en la tabla `users`. Si es así, se le da acceso total y rol de 'admin' en cualquier proyecto automáticamente, aunque no esté en la tabla `team_members`.
+
+### 3. `ui/index.php`
+El panel de control principal (Dashboard).
+-   **Diseño**: Usa CSS Grid no-lineal (Sidebar a la izquierda, Contenido a la derecha).
+-   **Lógica de Renderizado**:
+    -   Si eres **Admin** del proyecto seleccionado, muestra el panel de "Gestión del Proyecto" para cambiar el estado.
+    -   Si eres **Trabajador**, solo muestra la información.
+    -   Muestra la lista de miembros con sus roles y estados (Puntos de colores).
+-   **Barra Lateral**: Incluye el selector de estado del usuario (Oficina, Teletrabajo, etc.) que envía una petición POST para actualizar el estado en tiempo real.
+
+### 4. `modelo/init_db.php`
+Script maestro de inicialización.
+-   Lee el archivo `schema.sql`.
+-   Resetea la base de datos.
+-   Crea el usuario Admin original.
+-   Se ejecuta via Docker: `docker compose exec web php modelo/init_db.php`.
+
+---
+
+## 🚀 FLUJO DE DATOS
+
+1.  El usuario entra a `ui/inicio.php`.
+2.  Envía formulario POST.
+3.  `consultas.php` verifica credenciales en MySQL.
+4.  Si es correcto, crea una `SESSION` y redirige a `ui/index.php`.
+5.  En `index.php`, se instancia `Consultas` para pedir los proyectos y los detalles del usuario.
+6.  El HTML se renderiza dinámicamente según los datos recibidos.
+
+## 👻 NOTA SOBRE EL "GHOST ADMIN"
+
+El Admin Global (`admin@teamhub.com`) es especial:
+-   Tiene `role = 'admin'` en la tabla `users`.
+-   **NO** existe en la tabla `team_members`. por eso no aparece en las listas de miembros UI.
+-   Sin embargo, `consultas.php` intercepta sus peticiones y le otorga permisos de jefe (`admin`) en todos los contextos.
