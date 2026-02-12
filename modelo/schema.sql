@@ -10,16 +10,20 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    status ENUM('Oficina', 'Teletrabajo', 'Ausente') DEFAULT 'Oficina',
-    role ENUM('user', 'admin') DEFAULT 'user',
+    role ENUM('admin', 'user') DEFAULT 'user',
+    status ENUM('Oficina', 'Teletrabajo', 'Ausente', 'Reunión', 'Desconectado') DEFAULT 'Oficina',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de Equipos (Proyectos)
+-- Tabla de Equipos (Proyectos) con soporte para Gather
 CREATE TABLE teams (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
+    status ENUM('En Progreso', 'Completado', 'Pausado', 'Cancelado') DEFAULT 'En Progreso',
+    gather_space_id VARCHAR(255) DEFAULT NULL,
+    gather_space_url VARCHAR(500) DEFAULT NULL,
+    gather_enabled BOOLEAN DEFAULT FALSE,
     created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
@@ -44,35 +48,48 @@ CREATE TABLE tasks (
     description TEXT,
     status ENUM('pendiente', 'en_progreso', 'completada') DEFAULT 'pendiente',
     user_id INT,
+    team_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
 );
 
 -- Seed Data (Datos iniciales)
 
--- Usuario Admin (Password: 1234)
--- Nota: En producción, usar password_hash en PHP. Aquí se inserta directo para probar con la lógica actual de consultas.php
-INSERT INTO users (username, email, password, status, role) VALUES 
-('Admin', 'admin@teamhub.com', '$2y$10$YourHashedPasswordHereOrPlainTextIfLogicAllows', 'Oficina', 'admin'),
-('Ana', 'ana@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Teletrabajo', 'user'),
-('Carlos', 'carlos@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Oficina', 'user'),
-('Pedro', 'pedro@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Ausente', 'user'),
-('Maria', 'maria@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Teletrabajo', 'user'),
-('Lucia', 'lucia@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Oficina', 'user');
+-- Usuario Admin Ghost (Password: 1234)
+-- Este usuario tiene permisos globales y no aparece en las listas de miembros
+INSERT INTO users (username, email, password, role, status) VALUES 
+('Admin', 'admin@teamhub.com', '$2y$10$placeholder', 'admin', 'Oficina');
 
--- Equipos
-INSERT INTO teams (name, description, created_by) VALUES 
-('Proyecto Alpha', 'Desarrollo de API REST', 1),
-('Marketing Q1', 'Campaña publicitaria', 1),
-('Infraestructura', 'Mantenimiento de servidores', 1);
+-- Usuarios de prueba
+INSERT INTO users (username, email, password, status) VALUES 
+('Sergio', 'sergio@teamhub.com', '$2y$10$placeholder', 'Oficina'),
+('David', 'david@teamhub.com', '$2y$10$placeholder', 'Teletrabajo'),
+('Laura', 'laura@teamhub.com', '$2y$10$placeholder', 'Oficina'),
+('Elena', 'elena@teamhub.com', '$2y$10$placeholder', 'Reunión');
 
--- Miembros
--- Admin (id 1) NO se inserta para que sea Ghost Admin (no visible pero con permisos)
+-- Equipos / Proyectos
+INSERT INTO teams (name, description, status, created_by) VALUES 
+('Proyecto Alpha', 'Desarrollo de API REST para integración con sistemas externos', 'En Progreso', 1),
+('Marketing Q1', 'Campaña publicitaria digital para el primer trimestre', 'En Progreso', 1),
+('Infraestructura Cloud', 'Migración a arquitectura cloud y optimización de servidores', 'En Progreso', 1),
+('Diseño UI/UX', 'Renovación completa de la identidad visual de la marca', 'Pausado', 1);
+
+-- Miembros de los equipos (Admin Ghost NO se incluye aquí)
 INSERT INTO team_members (user_id, team_id, role) VALUES 
-(2, 1, 'admin'),
-(3, 1, 'member'),
-(4, 1, 'member'),
-(5, 2, 'admin'),
-(6, 2, 'member'),
-(2, 2, 'member'),
-(3, 3, 'admin');
+-- Proyecto Alpha
+(2, 1, 'admin'),  -- Sergio es jefe
+(3, 1, 'member'), -- David es miembro
+(4, 1, 'member'), -- Laura es miembro
+
+-- Marketing Q1
+(3, 2, 'admin'),  -- David es jefe
+(5, 2, 'member'), -- Elena es miembro
+
+-- Infraestructura
+(2, 3, 'member'), -- Sergio es miembro
+(4, 3, 'admin'),  -- Laura es jefe
+
+-- Diseño UI/UX
+(5, 4, 'admin'),  -- Elena es jefe
+(3, 4, 'member'); -- David es miembro

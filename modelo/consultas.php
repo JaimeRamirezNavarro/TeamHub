@@ -27,7 +27,7 @@ class Consultas {
         return $stmt->fetch();
     }
 
-    public function registrarUsuario($username, $email, $password, $role = 'user') {
+    public function registrarUsuario($username, $email, $password) {
         // Verificar si el email ya existe
         $stmt = $this->db->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
@@ -38,13 +38,8 @@ class Consultas {
         // Hashear contraseña
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         
-        // Ensure role is valid
-        if (!in_array($role, ['user', 'admin'])) {
-            $role = 'user';
-        }
-        
-        $stmt = $this->db->prepare("INSERT INTO users (username, email, password, role, status) VALUES (?, ?, ?, ?, 'Oficina')");
-        return $stmt->execute([$username, $email, $hashed_password, $role]);
+        $stmt = $this->db->prepare("INSERT INTO users (username, email, password, status) VALUES (?, ?, ?, 'Oficina')");
+        return $stmt->execute([$username, $email, $hashed_password]);
     }
 
     // GESTIÓN DE EQUIPOS (PROYECTOS)
@@ -67,16 +62,8 @@ class Consultas {
     
     public function unirseEquipo($user_id, $team_id) {
         if ($this->esMiembro($user_id, $team_id)) return false;
-        
-        // Determinar rol en el equipo basado en el rol global
-        $stmt = $this->db->prepare("SELECT role FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-        $globalRole = $stmt->fetchColumn();
-        
-        $teamRole = ($globalRole === 'admin') ? 'admin' : 'member';
-
-        $stmt = $this->db->prepare("INSERT INTO team_members (user_id, team_id, role) VALUES (?, ?, ?)");
-        return $stmt->execute([$user_id, $team_id, $teamRole]);
+        $stmt = $this->db->prepare("INSERT INTO team_members (user_id, team_id, role) VALUES (?, ?, 'member')");
+        return $stmt->execute([$user_id, $team_id]);
     }
     
     public function salirEquipo($user_id, $team_id) {
@@ -132,5 +119,74 @@ class Consultas {
     public function obtenerTareas() {
         $query = $this->db->query("SELECT title, status FROM tasks");
         return $query ? $query->fetchAll() : [];
+    }
+
+    // ==========================================
+    // INTEGRACIÓN CON GATHER
+    // ==========================================
+    
+    /**
+     * Vincular un proyecto con un espacio de Gather
+     */
+    public function vincularGatherSpace($team_id, $space_id, $space_url) {
+        $stmt = $this->db->prepare("
+            UPDATE teams 
+            SET gather_space_id = ?, 
+                gather_space_url = ?,
+                gather_enabled = TRUE
+            WHERE id = ?
+        ");
+        return $stmt->execute([$space_id, $space_url, $team_id]);
+    }
+    
+    /**
+     * Obtener información de Gather de un proyecto
+     */
+    public function obtenerGatherInfo($team_id) {
+        $stmt = $this->db->prepare("
+            SELECT gather_space_id, gather_space_url, gather_enabled 
+            FROM teams 
+            WHERE id = ?
+        ");
+        $stmt->execute([$team_id]);
+        return $stmt->fetch();
+    }
+    
+    /**
+     * Desactivar integración de Gather para un proyecto
+     */
+    public function desactivarGather($team_id) {
+        $stmt = $this->db->prepare("
+            UPDATE teams 
+            SET gather_enabled = FALSE 
+            WHERE id = ?
+        ");
+        return $stmt->execute([$team_id]);
+    }
+    
+    /**
+     * Activar integración de Gather para un proyecto
+     */
+    public function activarGather($team_id) {
+        $stmt = $this->db->prepare("
+            UPDATE teams 
+            SET gather_enabled = TRUE 
+            WHERE id = ?
+        ");
+        return $stmt->execute([$team_id]);
+    }
+    
+    /**
+     * Obtener miembros con emails para sincronización con Gather
+     */
+    public function obtenerMiembrosConEmail($team_id) {
+        $stmt = $this->db->prepare("
+            SELECT u.id, u.username, u.email, u.status, tm.role 
+            FROM users u 
+            JOIN team_members tm ON u.id = tm.user_id 
+            WHERE tm.team_id = ?
+        ");
+        $stmt->execute([$team_id]);
+        return $stmt->fetchAll();
     }
 }
