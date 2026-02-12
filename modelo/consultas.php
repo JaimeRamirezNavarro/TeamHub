@@ -27,7 +27,7 @@ class Consultas {
         return $stmt->fetch();
     }
 
-    public function registrarUsuario($username, $email, $password) {
+    public function registrarUsuario($username, $email, $password, $role = 'user') {
         // Verificar si el email ya existe
         $stmt = $this->db->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
@@ -38,8 +38,13 @@ class Consultas {
         // Hashear contraseña
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         
-        $stmt = $this->db->prepare("INSERT INTO users (username, email, password, status) VALUES (?, ?, ?, 'Oficina')");
-        return $stmt->execute([$username, $email, $hashed_password]);
+        // Ensure role is valid
+        if (!in_array($role, ['user', 'admin'])) {
+            $role = 'user';
+        }
+        
+        $stmt = $this->db->prepare("INSERT INTO users (username, email, password, role, status) VALUES (?, ?, ?, ?, 'Oficina')");
+        return $stmt->execute([$username, $email, $hashed_password, $role]);
     }
 
     // GESTIÓN DE EQUIPOS (PROYECTOS)
@@ -62,8 +67,16 @@ class Consultas {
     
     public function unirseEquipo($user_id, $team_id) {
         if ($this->esMiembro($user_id, $team_id)) return false;
-        $stmt = $this->db->prepare("INSERT INTO team_members (user_id, team_id, role) VALUES (?, ?, 'member')");
-        return $stmt->execute([$user_id, $team_id]);
+        
+        // Determinar rol en el equipo basado en el rol global
+        $stmt = $this->db->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->execute([$user_id]);
+        $globalRole = $stmt->fetchColumn();
+        
+        $teamRole = ($globalRole === 'admin') ? 'admin' : 'member';
+
+        $stmt = $this->db->prepare("INSERT INTO team_members (user_id, team_id, role) VALUES (?, ?, ?)");
+        return $stmt->execute([$user_id, $team_id, $teamRole]);
     }
     
     public function salirEquipo($user_id, $team_id) {

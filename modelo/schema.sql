@@ -11,6 +11,7 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     status ENUM('Oficina', 'Teletrabajo', 'Ausente') DEFAULT 'Oficina',
+    role ENUM('user', 'admin') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -51,10 +52,13 @@ CREATE TABLE tasks (
 
 -- Usuario Admin (Password: 1234)
 -- Nota: En producción, usar password_hash en PHP. Aquí se inserta directo para probar con la lógica actual de consultas.php
-INSERT INTO users (username, email, password, status) VALUES 
-('Admin', 'admin@teamhub.com', '$2y$10$YourHashedPasswordHereOrPlainTextIfLogicAllows', 'Oficina'),
-('Ana', 'ana@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Teletrabajo'),
-('Carlos', 'carlos@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Oficina');
+INSERT INTO users (username, email, password, status, role) VALUES 
+('Admin', 'admin@teamhub.com', '$2y$10$YourHashedPasswordHereOrPlainTextIfLogicAllows', 'Oficina', 'admin'),
+('Ana', 'ana@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Teletrabajo', 'user'),
+('Carlos', 'carlos@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Oficina', 'user'),
+('Pedro', 'pedro@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Ausente', 'user'),
+('Maria', 'maria@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Teletrabajo', 'user'),
+('Lucia', 'lucia@teamhub.com', '$2y$10$YourHashedPasswordHere', 'Oficina', 'user');
 
 -- Equipos
 INSERT INTO teams (name, description, created_by) VALUES 
@@ -63,8 +67,12 @@ INSERT INTO teams (name, description, created_by) VALUES
 ('Infraestructura', 'Mantenimiento de servidores', 1);
 
 -- Miembros
+-- Admin (id 1) NO se inserta para que sea Ghost Admin (no visible pero con permisos)
 INSERT INTO team_members (user_id, team_id, role) VALUES 
-(1, 1, 'admin'),
-(2, 1, 'member'),
-(1, 2, 'member'),
-(3, 2, 'admin');
+(2, 1, 'admin'),
+(3, 1, 'member'),
+(4, 1, 'member'),
+(5, 2, 'admin'),
+(6, 2, 'member'),
+(2, 2, 'member'),
+(3, 3, 'admin');

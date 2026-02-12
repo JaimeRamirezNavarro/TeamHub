@@ -28,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     // REGISTER
     elseif (isset($_POST['register'])) {
-        if ($consultas->registrarUsuario($_POST['username'], $_POST['email'], $_POST['password'])) {
+        $role = $_POST['role'] ?? 'user';
+        if ($consultas->registrarUsuario($_POST['username'], $_POST['email'], $_POST['password'], $role)) {
             $success = '¡Cuenta creada! Por favor inicia sesión.';
             $active_tab = 'login'; // Ir al login tras registro
         } else {
@@ -93,6 +94,10 @@ $active_tab = isset($active_tab) ? $active_tab : 'login';
                 <input type="text" name="username" placeholder="Nombre de usuario" required>
                 <input type="email" name="email" placeholder="Correo electrónico" required>
                 <input type="password" name="password" placeholder="Contraseña" required>
+                <select name="role" required style="width: 100%; padding: 12px; margin: 8px 0; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px;">
+                    <option value="user">Trabajador</option>
+                    <option value="admin">Jefe</option>
+                </select>
                 <button type="submit" name="register" class="btn-register">Registrarse</button>
             </form>
         </div>
