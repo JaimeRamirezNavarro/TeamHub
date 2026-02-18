@@ -148,7 +148,7 @@ $username = $currentUser['username'];
 
 <div class="container">
     <div class="header">
-        <h1>👥 Usuarios Online</h1>
+        <h1>Usuarios Online</h1>
         <a href="dashboard.php" class="back-btn">← Volver al Dashboard</a>
     </div>
 
@@ -181,7 +181,7 @@ $username = $currentUser['username'];
         grid.innerHTML = '';
 
         if (!data.users || data.users.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px;">No hay nadie conectado ahora mismo. 😴</div>';
+            grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px;">No hay nadie conectado ahora mismo.</div>';
             return;
         }
 

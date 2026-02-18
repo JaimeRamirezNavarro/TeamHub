@@ -9,9 +9,9 @@ class Consultas {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function verificarlogin($email, $password) {
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ? ");
-        $stmt->execute([$email]);
+    public function verificarlogin($identifier, $password) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ? OR username = ?");
+        $stmt->execute([$identifier, $identifier]);
         $user = $stmt->fetch();
         
         if ($user && (password_verify($password, $user['password']) || $password === $user['password'])) {

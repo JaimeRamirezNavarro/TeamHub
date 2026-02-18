@@ -24,4 +24,4 @@ php_value max_execution_time 300
 <FilesMatch "\.(env|ini|log|sql)$">
     Order allow,deny
     Deny from all
-</FilesMatch>t
+</FilesMatch>

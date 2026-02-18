@@ -431,7 +431,7 @@ if ($selected_team_id) {
                     </span>
                     
                     <?php if ($es_miembro): ?>
-                        <span style="font-size:0.9rem; color:#4CAF50; margin-left:10px;">✓ Eres miembro</span>
+                        <span style="font-size:0.9rem; color:#4CAF50; margin-left:10px;">Eres miembro</span>
                     <?php endif; ?>
                 </div>
 

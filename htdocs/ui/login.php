@@ -17,7 +17,7 @@ $consultas = new Consultas();
 $error = '';
 $success = '';
 $active_tab = 'login';
-$from_gather = isset($_GET['from']) && $_GET['from'] === 'gather';
+
 
 // 2. Handle "Remember Me" Cookie
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['teamhub_remember'])) {
@@ -37,10 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // CASE A: Normal Login
     if (isset($_POST['login'])) {
-        $email = trim($_POST['email']);
+        $identifier = trim($_POST['identifier']);
         $password = trim($_POST['password']);
         
-        $user = $consultas->verificarlogin($email, $password);
+        $user = $consultas->verificarlogin($identifier, $password);
         
         if ($user) {
             loginUser($user, isset($_POST['remember_me']), $consultas);
@@ -64,36 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // CASE C: Gather Auto-Registration
-    elseif (isset($_POST['auto_register'])) {
-        $username = trim($_POST['username']);
-        $email = trim($_POST['email']);
-        
-        if (empty($username) || empty($email)) {
-            $error = 'Por favor completa todos los campos';
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $error = 'Email inválido';
-        } else {
-            // Generate random password
-            $auto_password = bin2hex(random_bytes(8));
-            
-            // Try to register
-            $result = $consultas->registrarUsuarioDesdeGather($username, $email, $auto_password);
-            
-            if ($result) {
-                // Auto login after register
-                $user = $consultas->verificarlogin($email, $auto_password);
-                if ($user) {
-                    loginUser($user, true, $consultas, true);
-                } else {
-                    $error = 'Error al iniciar sesión automáticamente';
-                }
-            } else {
-                $error = 'Este correo ya está registrado. Por favor inicia sesión.';
-                $active_tab = 'login';
-            }
-        }
-    }
+
 }
 
 /**
@@ -210,9 +181,8 @@ function loginUser($user, $remember, $consultas, $isWelcome = false) {
         }
         .btn-primary { background: #2196F3; color: white; }
         .btn-primary:hover { background: #1976D2; transform: translateY(-1px); }
-        .btn-gather { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .btn-gather:hover { opacity: 0.9; transform: translateY(-1px); }
-        
+
+
         .msg { 
             padding: 12px; 
             border-radius: 8px; 
@@ -222,48 +192,15 @@ function loginUser($user, $remember, $consultas, $isWelcome = false) {
         }
         .error { background: rgba(255, 82, 82, 0.1); color: #ff5252; border: 1px solid rgba(255, 82, 82, 0.2); }
         .success { background: rgba(76, 175, 80, 0.1); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.2); }
-        
-        .gather-link {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid #333;
-            font-size: 0.85rem;
-            color: #888;
-        }
-        .gather-link a { color: #2196F3; text-decoration: none; }
-        .gather-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-            display: inline-block; margin-bottom: 15px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">🏢 <span>TeamHub</span></div>
+        <div class="logo"><span>TeamHub</span></div>
 
         <?php if($error) echo "<div class='msg error'>$error</div>"; ?>
         <?php if($success) echo "<div class='msg success'>$success</div>"; ?>
         
-        <?php if ($from_gather): ?>
-            <!-- GATHER MODE -->
-            <div style="text-align: center;">
-                <span class="gather-badge">🌐 Acceso desde Gather</span>
-                <p style="color: #ccc; margin-top: 0; font-size: 0.9rem;">Crea tu cuenta automáticamente para sincronizar tu estado.</p>
-                
-                <form method="POST">
-                    <input type="text" name="username" placeholder="Nombre completo" required>
-                    <input type="email" name="email" placeholder="Correo electrónico" required>
-                    <button type="submit" name="auto_register" class="btn btn-gather">✨ Entrar con Gather</button>
-                </form>
-                
-                <div class="gather-link">
-                    ¿Ya tienes cuenta? <a href="login.php">Inicia sesión normal</a>
-                </div>
-            </div>
-
-        <?php else: ?>
             <!-- NORMAL MODE -->
             <div class="tabs">
                 <div class="tab <?= $active_tab == 'login' ? 'active' : '' ?>" onclick="switchTab('login')">Iniciar Sesión</div>
@@ -272,7 +209,7 @@ function loginUser($user, $remember, $consultas, $isWelcome = false) {
 
             <div id="login-form" class="form-section <?= $active_tab == 'login' ? 'active' : '' ?>">
                 <form method="POST">
-                    <input type="email" name="email" placeholder="Correo electrónico" required>
+                    <input type="text" name="identifier" placeholder="Correo electrónico o Usuario" required>
                     <input type="password" name="password" placeholder="Contraseña" required>
                     
                     <div style="display: flex; align-items: center; margin: 15px 0; color: #aaa; font-size: 0.9rem;">
@@ -292,11 +229,6 @@ function loginUser($user, $remember, $consultas, $isWelcome = false) {
                     <button type="submit" name="register" class="btn btn-primary" style="background: #4CAF50;">Crear Cuenta</button>
                 </form>
             </div>
-            
-            <div class="gather-link">
-                <a href="?from=gather">🌐 Soy usuario de Gather</a>
-            </div>
-        <?php endif; ?>
     </div>
 
     <script>
