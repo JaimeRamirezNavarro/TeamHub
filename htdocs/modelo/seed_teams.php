@@ -1,5 +1,6 @@
 <?php
 require_once 'motor/db.php';
+require_once 'config/gather_config.php';
 
 try {
     $db = Database::getInstance()->getConnection();
@@ -17,13 +18,15 @@ try {
     ];
 
     $checkStmt = $db->prepare("SELECT COUNT(*) FROM teams WHERE name = ?");
-    $insertStmt = $db->prepare("INSERT INTO teams (name, description, created_by) VALUES (?, ?, ?)");
+    // $insertStmt removed here, moved inside loop or prepared differently
     
     foreach ($teams as $team) {
         $checkStmt->execute([$team[0]]);
         if ($checkStmt->fetchColumn() == 0) {
-            $insertStmt->execute([$team[0], $team[1], $creator_id]);
-            echo "<p>Creado: {$team[0]}</p>";
+            // Insert with Gather info enabled for all default projects
+            $insertStmt = $db->prepare("INSERT INTO teams (name, description, created_by, gather_space_id, gather_space_url, gather_enabled) VALUES (?, ?, ?, ?, ?, 1)");
+            $insertStmt->execute([$team[0], $team[1], $creator_id, GATHER_SOURCE_SPACE, GATHER_DEFAULT_URL]);
+            echo "<p>Creado: {$team[0]} (con Gather)</p>";
         }
     }
     

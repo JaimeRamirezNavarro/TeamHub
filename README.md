@@ -1,83 +1,57 @@
 # TeamHub
 
-**TeamHub** es una plataforma moderna y robusta para la gestión de proyectos y colaboración de equipos. Diseñada para ofrecer una experiencia de usuario fluida con una interfaz oscura y profesional, permite gestionar roles, estados de proyectos y disponibilidad de usuarios en tiempo real.
+**TeamHub** es una plataforma moderna para la gestión de proyectos y colaboración de equipos. Ofrece una experiencia fluida con una interfaz oscura y profesional, permitiendo gestionar roles, estados de proyectos y disponibilidad de usuarios en tiempo real.
 
 ## Características Principales
 
 -   **Gestión de Proyectos**:
     -   Visualización clara de proyectos con descripciones detalladas.
-    -   Sistema de estados de proyecto: *En Progreso, Completado, Pausado, Cancelado*.
-    -   Permisos diferenciados: Solo los **Jefes de Proyecto** pueden cambiar el estado.
+    -   Sistema de estados: *En Progreso, Completado, Pausado, Cancelado*.
+    -   Control de acceso basado en roles.
 
--   **Roles y Permisos Avanzados**:
-    -   **Trabajador**: Puede ver proyectos, tareas y miembros.
-    -   **Jefe de Proyecto (Admin Local)**: Gestiona el estado del proyecto.
-    -   **Ghost Admin (Super Usuario)**: Un rol especial oculto que tiene control total sobre todos los proyectos sin aparecer en las listas de miembros.
+-   **Usuarios Online**:
+    -   Sistema de presencia en tiempo real integrado.
+    -   Visualización de quién está conectado, ausente o desconectado.
+    -   Actualización automática de actividad.
 
--   **Gestión de Disponibilidad**:
-    -   Indicadores de estado de usuario en tiempo real: *Oficina, Teletrabajo, Reunión, Desconectado*.
-    -   Selector rápido de estado en la barra lateral.
+-   **Roles y Permisos**:
+    -   **Trabajador**: Visualización y colaboración.
+    -   **Jefe de Proyecto**: Gestión de estados y equipos.
+    -   **Admin**: Control total del sistema.
 
 -   **Interfaz Moderna**:
-    -   Diseño *Dark Mode* profesional.
-    -   Layout responsivo con Sidebar y Panel Central.
-    -   Feedback visual mediante etiquetas de colores y notificaciones.
-
-## Tecnologías
-
--   **Backend**: PHP 8.2 (Vanilla, Estructura MVC simplificada).
--   **Base de Datos**: MySQL 8.0.
--   **Servidor Web**: Apache.
--   **Infraestructura**: Docker & Docker Compose.
--   **Frontend**: HTML5, CSS3 (Grid/Flexbox), PHP Templating.
-
-## Instalación y Despliegue
-
-Este proyecto está contenerizado con Docker para facilitar su despliegue en cualquier entorno.
-
-### Prerrequisitos
--   Docker y Docker Compose instalados.
-
-### Pasos
-1.  **Clonar el repositorio**:
-    ```bash
-    git clone https://github.com/JaimeRamirezNavarro/TeamHub.git
-    cd TeamHub
-    ```
-
-2.  **Iniciar los contenedores**:
-    ```bash
-    docker compose up -d
-    ```
-    Esto levantará el servidor web en el puerto `8080` y la base de datos.
-
-3.  **Inicializar la Base de Datos**:
-    Ejecuta el script de migración incluido para crear las tablas y datos de prueba:
-    ```bash
-    docker compose exec web php modelo/init_db.php
-    ```
-
-4.  **Acceder a la aplicación**:
-    Abre tu navegador en: [http://localhost:8080](http://localhost:8080)
-
-## Credenciales de Prueba
-
-El sistema viene con datos pre-cargados para probar los diferentes roles:
-
-| Rol | Email | Contraseña |
-| :--- | :--- | :--- |
-| **Super Admin (Ghost)** | `admin@teamhub.com` | `1234` |
-| **Jefe de Proyecto** | `sergio@teamhub.com` | `1234` |
-| **Trabajador** | `david@teamhub.com` | `1234` |
-
-*(Nota: Todos los usuarios de prueba tienen la contraseña `1234` por defecto)*
+    -   Diseño *Dark Mode*.
+    -   Layout responsivo.
+    -   Notificaciones y feedback visual.
 
 ## Estructura del Proyecto
 
-El código está organizado estrictamente en 3 capas:
--   `modelo/`: Lógica de negocio, migraciones, seeds y esquema SQL.
--   `motor/`: Conexión a base de datos y núcleo.
--   `ui/`: Vistas y controladores de interfaz.
+El código está organizado para facilitar su mantenimiento:
+
+-   `htdocs/`
+    -   `modelo/`: Lógica de negocio y consultas a BD.
+    -   `motor/`: Conexión a base de datos (DB).
+    -   `ui/`: Interfaz de usuario (Páginas PHP, HTML).
+        -   `components/`: Fragmentos reutilizables (Widgets).
+        -   `assets/`: Recursos estáticos.
+    -   `endpoints/`: APIs internas para funcionalidades AJAX (Heartbeat, Status).
+    -   `config/`: Archivos de configuración.
+
+## Instalación
+
+1.  **Clonar el repositorio**:
+    ```bash
+    git clone https://github.com/JaimeRamirezNavarro/TeamHub.git
+    ```
+
+2.  **Iniciar con Docker**:
+    ```bash
+    docker compose up -d
+    ```
+
+3.  **Acceder**:
+    -   Web: [http://localhost:8080](http://localhost:8080)
+    -   Base de Datos: Puerto 3306
 
 ---
-Desarrollado  por Marco Solinas Cabrera y Jaime Ramirez Navarro
+Desarrollado para una gestión eficiente de equipos.

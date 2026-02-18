@@ -1,0 +1,54 @@
+<!-- Widget Reducido: Botón a Usuarios Online -->
+<div id="gather-widget-simple" style="margin: 20px 0;">
+    <a href="online_users.php" style="
+        display: block;
+        background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 15px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    " onmouseover="this.style.borderColor='#2196F3'; this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.borderColor='#333'; this.style.transform='translateY(0)'">
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="font-weight: 600; font-size: 0.95rem;">👥 Online</div>
+            <div id="widget-online-count" style="
+                background: #4CAF50; 
+                color: white; 
+                font-size: 0.75rem; 
+                padding: 2px 8px; 
+                border-radius: 10px; 
+                font-weight: bold;
+            ">0</div>
+        </div>
+
+        <div style="font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 5px;">
+            <span id="widget-status-dot" style="width: 6px; height: 6px; background: #888; border-radius: 50%;"></span>
+            <span id="widget-status-text">Cargando...</span>
+        </div>
+    </a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/endpoints/get_online_users.php')
+            .then(res => res.json())
+            .then(data => {
+                const count = document.getElementById('widget-online-count');
+                const text = document.getElementById('widget-status-text');
+                const dot = document.getElementById('widget-status-dot');
+
+                if (data.success) {
+                    count.textContent = data.online_count || 0;
+                    text.textContent = 'Ver detalles';
+                    dot.style.background = '#4CAF50';
+                } else {
+                    text.textContent = 'Sin conexión';
+                }
+            })
+            .catch(e => console.error(e));
+    });
+</script>

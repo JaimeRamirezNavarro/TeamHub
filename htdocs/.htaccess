@@ -1,0 +1,27 @@
+# Protección y configuración
+Options -Indexes
+DirectoryIndex index.php
+
+# PHP settings
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+
+# Rewrite rules
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Forzar HTTPS (opcional)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Proteger archivos sensibles
+    RewriteRule ^motor/db\.php$ - [F,L]
+    RewriteRule ^motor/.*config\.php$ - [F,L]
+</IfModule>
+
+# Proteger archivos de configuración
+<FilesMatch "\.(env|ini|log|sql)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>t

@@ -4,7 +4,7 @@ require_once __DIR__ . '/../modelo/consultas.php';
 
 // Auth Check
 if(!isset($_SESSION['user_id'])){
-    header("Location: inicio.php");
+    header("Location: login.php");
     exit;
 }
 
@@ -19,8 +19,19 @@ $userStatus = $currentUser['status'];
 // Handle Actions (Join/Leave/Update Status/Logout)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['logout'])) {
+        // Clear Remember Me Token in DB
+        if (isset($_SESSION['user_id'])) {
+            $consultas->limpiarToken($_SESSION['user_id']);
+        }
+        
+        // Clear Cookie
+        if (isset($_COOKIE['teamhub_remember'])) {
+            setcookie('teamhub_remember', '', time() - 3600, '/');
+            unset($_COOKIE['teamhub_remember']);
+        }
+
         session_destroy();
-        header("Location: inicio.php");
+        header("Location: login.php");
         exit;
     }
     
@@ -29,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $consultas->actualizarEstado($user_id, $_POST['new_user_status']);
         // Redirect to same page with query params to avoid form resubmission warning
         $params = $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '';
-        header("Location: index.php" . $params);
+        header("Location: dashboard.php" . $params);
         exit;
     }
 
@@ -51,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Redirect to avoid resubmission, keeping the selected team
     $redirect_team = isset($_POST['team_id']) ? "?team_id=" . $_POST['team_id'] : "";
-    header("Location: index.php" . $redirect_team);
+    header("Location: dashboard.php" . $redirect_team);
     exit;
 }
 
@@ -312,6 +323,8 @@ if ($selected_team_id) {
         .user-status-Reunión { background-color: #FFC107; }
         .user-status-Ausente { background-color: #FF5722; }
         .user-status-Desconectado { background-color: #9E9E9E; }
+        .user-status-En-Gather { background-color: #9C27B0; box-shadow: 0 0 5px #9C27B0; }
+
 
 
         /* Action Buttons */
@@ -379,6 +392,11 @@ if ($selected_team_id) {
                     </select>
                 </form>
             </div>
+        </div>
+
+        <!-- Gather Widget -->
+        <div id="gather-presence-widget-container" style="margin-bottom: 20px;">
+           <?php include __DIR__ . '/components/widget_online_users.html'; ?>
         </div>
 
         <div style="margin-bottom:10px; font-weight:600; color:var(--text-secondary); font-size:0.9rem;">PROYECTOS</div>
@@ -487,7 +505,8 @@ if ($selected_team_id) {
                                             <div>
                                                 <span><?= htmlspecialchars($m['username']) ?></span>
                                                 <!-- Status Dot for Members -->
-                                                <span class="status-dot user-status-<?= $m['status'] ?>" title="<?= $m['status'] ?>" style="margin-left:5px;"></span>
+                                                <?php $statusClass = str_replace(' ', '-', $m['status']); ?>
+                                                <span class="status-dot user-status-<?= $statusClass ?>" title="<?= $m['status'] ?>" style="margin-left:5px;"></span>
                                             </div>
                                         </div>
                                         <?php if ($m['role'] === 'admin'): ?>
@@ -511,5 +530,6 @@ if ($selected_team_id) {
         <?php endif; ?>
     </div>
 
+<script src="js/heartbeat.js"></script>
 </body>
 </html>

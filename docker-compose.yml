@@ -8,9 +8,9 @@ services:
     volumes:
       - .:/var/www/html
     environment:
-      - APACHE_DOCUMENT_ROOT=/var/www/html/ui
+      - APACHE_DOCUMENT_ROOT=/var/www/html/htdocs
     command: >
-      bash -c "sed -ri -e 's!/var/www/html!/var/www/html/ui!g' /etc/apache2/sites-available/*.conf && sed -ri -e 's!/var/www/!/var/www/html/ui!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf && docker-php-ext-install mysqli pdo_mysql && apache2-foreground"
+      bash -c "a2enmod rewrite && sed -ri -e 's!/var/www/html!/var/www/html/htdocs!g' /etc/apache2/sites-available/*.conf && sed -ri -e 's!/var/www/!/var/www/html/htdocs!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf && docker-php-ext-install mysqli pdo_mysql && apache2-foreground"
 
   db:
     image: mysql:8.0
@@ -29,6 +29,18 @@ services:
     environment:
       PMA_HOST: db
       MYSQL_ROOT_PASSWORD: root
+
+  gather-sync:
+    build: ./htdocs/gather-sync
+    depends_on:
+      - db
+    environment:
+      GATHER_API_KEY: SeyptHJjcOc54qsL
+      GATHER_SPACE_ID: oxMKxoJO51E/Oficina
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: proyecto_dual
 
 volumes:
   db_data:
