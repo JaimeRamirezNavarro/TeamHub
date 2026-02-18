@@ -65,6 +65,7 @@ try {
         JOIN team_members tm ON u.id = tm.user_id
         WHERE tm.team_id = ?
         AND u.last_activity >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+        AND u.role != 'admin'
         ORDER BY u.last_activity DESC
     ");
     $stmt->execute([$team['id']]);

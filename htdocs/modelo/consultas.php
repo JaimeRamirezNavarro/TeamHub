@@ -104,6 +104,7 @@ class Consultas {
             SELECT id, username, email, status, last_activity 
             FROM users 
             WHERE last_activity >= DATE_SUB(NOW(), INTERVAL {$minutes} MINUTE)
+            AND role != 'admin'
             ORDER BY last_activity DESC
         ");
         return $query ? $query->fetchAll() : [];
