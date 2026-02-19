@@ -1,10 +1,10 @@
 <?php
-require_once 'motor/db.php';
-require_once 'config/gather_config.php';
+require_once __DIR__ . '/../motor/db.php';
+require_once __DIR__ . '/../config/gather_config.php';
 
 try {
     $db = Database::getInstance()->getConnection();
-    
+
     // Needs a user to be the creator (assuming ID 1 exists)
     $stmtUser = $db->query("SELECT id FROM users LIMIT 1");
     $creator_id = $stmtUser->fetchColumn() ?: 1;
@@ -18,8 +18,7 @@ try {
     ];
 
     $checkStmt = $db->prepare("SELECT COUNT(*) FROM teams WHERE name = ?");
-    // $insertStmt removed here, moved inside loop or prepared differently
-    
+
     foreach ($teams as $team) {
         $checkStmt->execute([$team[0]]);
         if ($checkStmt->fetchColumn() == 0) {
@@ -29,14 +28,14 @@ try {
             echo "<p>Creado: {$team[0]} (con Gather)</p>";
         }
     }
-    
+
     echo "<ul>";
     $query = $db->query("SELECT name FROM teams");
     while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
         echo "<li>" . htmlspecialchars($row['name']) . "</li>";
     }
     echo "</ul>";
-    
+
 } catch (Exception $e) {
     echo "<h1>Error</h1>";
     echo "<p>" . $e->getMessage() . "</p>";

@@ -12,8 +12,12 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'user') DEFAULT 'user',
     status ENUM('Oficina', 'Teletrabajo', 'Ausente', 'Reunión', 'Desconectado', 'En Gather') DEFAULT 'Oficina',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    last_activity DATETIME DEFAULT NULL,
+    remember_token VARCHAR(255) DEFAULT NULL,
+    remember_token_expiry DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_last_activity (last_activity)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Tabla de Equipos (Proyectos) con soporte para Gather
 CREATE TABLE teams (
@@ -27,7 +31,7 @@ CREATE TABLE teams (
     created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Tabla de Miembros de Equipo
 CREATE TABLE team_members (
@@ -39,7 +43,7 @@ CREATE TABLE team_members (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     UNIQUE(user_id, team_id)
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Tabla de Tareas (Opcional, para completar el esquema)
 CREATE TABLE tasks (
@@ -52,7 +56,7 @@ CREATE TABLE tasks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Seed Data (Datos iniciales)
 
