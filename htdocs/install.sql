@@ -93,6 +93,7 @@ CREATE TABLE `teams` (
   `gather_space_id` varchar(255) DEFAULT NULL,
   `gather_space_url` varchar(500) DEFAULT NULL,
   `gather_enabled` tinyint(1) DEFAULT '0',
+  `github_repo` varchar(255) DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
