@@ -8,7 +8,7 @@ services:
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html
     command: >
-      bash -c "a2enmod rewrite && sed -ri -e 's!/var/www/html/htdocs!/var/www/html!g' /etc/apache2/sites-available/*.conf && sed -ri -e 's!/var/www/!/var/www/html!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf && docker-php-ext-install mysqli pdo_mysql && apache2-foreground"
+      bash -c "a2enmod rewrite && docker-php-ext-install mysqli pdo_mysql && apache2-foreground"
 
   db:
     image: mysql:8.0

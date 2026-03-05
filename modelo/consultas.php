@@ -135,6 +135,12 @@ class Consultas {
         return $stmt->fetch();
     }
 
+    public function vincularGitHub($team_id, $github_repo) {
+        // Permitir que github_repo sea NULL si se quiere desvincular
+        $stmt = $this->db->prepare("UPDATE teams SET github_repo = ? WHERE id = ?");
+        return $stmt->execute([$github_repo, $team_id]);
+    }
+
     public function actualizarEstadoEquipo($team_id, $status) {
         $stmt = $this->db->prepare("UPDATE teams SET status = ? WHERE id = ?");
         return $stmt->execute([$status, $team_id]);

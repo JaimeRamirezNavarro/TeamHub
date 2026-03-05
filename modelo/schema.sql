@@ -28,6 +28,7 @@ CREATE TABLE teams (
     gather_space_id VARCHAR(255) DEFAULT NULL,
     gather_space_url VARCHAR(500) DEFAULT NULL,
     gather_enabled BOOLEAN DEFAULT FALSE,
+    github_repo VARCHAR(255) DEFAULT NULL,
     created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
