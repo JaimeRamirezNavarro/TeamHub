@@ -24,140 +24,64 @@ $username = $currentUser['username'];
 <head>
     <meta charset="UTF-8">
     <title>TeamHub | Usuarios Online</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        base: '#F2F0E9',
+                        neon: '#a8dba8',
+                        neonSec: '#79c753',
+                    },
+                    fontFamily: {
+                        serif: ['Times New Roman', 'Georgia', 'serif'],
+                        mono: ['Courier New', 'Courier', 'monospace'],
+                    },
+                    boxShadow: {
+                        'brutal-lg': '8px 8px 0px 0px rgba(0,0,0,1)',
+                        'brutal-md': '4px 4px 0px 0px rgba(0,0,0,1)',
+                        'brutal-sm': '1px 1px 0px 0px rgba(0,0,0,1)',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --accent-color: #2196F3;
-            --border-color: #333;
+        /* Base y Reseteo Brutalista */
+        body { 
+            background: #F2F0E9;
+            color: black;
+            min-height: 100vh; 
+            margin: 0; 
+            background-image: linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 40px;
+        /* Cursores Pixelados Retro (Windows 95) */
+        * {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M0,0 L0,18 L6,12 L9,19.5 L12,18 L9,10.5 L15,10.5 Z'/%3E%3C/svg%3E") 0 0, auto;
         }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
+        a, button, [role="button"], .cursor-pointer, input[type="submit"], input[type="button"] {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M12,0 L12,7.5 L16.5,7.5 L16.5,10.5 L12,10.5 L12,18 L9,18 L9,10.5 L4.5,10.5 L4.5,7.5 L9,7.5 L9,0 Z M0,9 L4.5,9 L4.5,12 L0,12 Z M16.5,9 L21,9 L21,12 L16.5,12 Z'/%3E%3C/svg%3E") 12 12, pointer !important;
         }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 40px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
-        }
-
-        .back-btn {
-            text-decoration: none;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-        .back-btn:hover { color: white; transform: translateX(-5px); }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .user-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            transition: 0.2s;
-        }
-        
-        .user-card:hover {
-            transform: translateY(-2px);
-            border-color: #555;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-right: 15px;
-            position: relative;
-        }
-
-        .status-badge {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 2px solid var(--card-bg);
-        }
-
-        .user-info h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
-        .user-info p { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
-
-        .actions-bar {
-            margin-top: 40px;
-            padding: 20px;
-            background: rgba(33, 150, 243, 0.1);
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-        
-        .btn-gather {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-gather:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4); }
-
     </style>
 </head>
-<body>
+<body class="font-mono p-8 md:p-12">
 
-<div class="container">
-    <div class="header">
-        <h1>Usuarios Online</h1>
-        <a href="dashboard.php" class="back-btn">← Volver al Dashboard</a>
+<div class="max-w-5xl mx-auto">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 border-b-4 border-black pb-6 gap-4">
+        <h1 class="font-serif font-black text-4xl uppercase text-black tracking-tighter">ONLINE_USERS.EXE</h1>
+        <a href="dashboard.php" class="border-2 border-black bg-white text-black font-bold uppercase py-2 px-4 shadow-brutal-sm hover:bg-neon hover:text-black active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-none text-sm">
+            <-- BACK_TO_ROOT
+        </a>
     </div>
 
-    <div id="loading" style="text-align:center; padding:50px; color:#666;">
-        Cargando estado actual...
+    <div id="loading" class="text-center p-10 font-bold uppercase text-black animate-pulse bg-white border-2 border-black shadow-brutal-md w-full max-w-sm mx-auto">
+        [ LOADING SYSTEM_STATUS... ]
     </div>
 
-    <div id="users-grid" class="grid"></div>
-
+    <div id="users-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
 
 </div>
 
@@ -169,9 +93,9 @@ $username = $currentUser['username'];
         fetch('/endpoints/get_online_users.php')
             .then(res => res.json())
             .then(data => {
-                document.getElementById('loading').style.display = 'none';
+                const loader = document.getElementById('loading');
+                if (loader) loader.style.display = 'none';
                 renderUsers(data);
-                // Gather integration removed, so no action buttons needed
             })
             .catch(err => console.error(err));
     }
@@ -181,7 +105,7 @@ $username = $currentUser['username'];
         grid.innerHTML = '';
 
         if (!data.users || data.users.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px;">No hay nadie conectado ahora mismo.</div>';
+            grid.innerHTML = '<div class="col-span-full text-center p-8 bg-white border-2 border-black shadow-brutal-md font-bold uppercase text-black">NO_ACTIVE_CONNECTIONS</div>';
             return;
         }
 
@@ -189,15 +113,19 @@ $username = $currentUser['username'];
             const statusColor = getStatusColor(user.status);
             
             const card = document.createElement('div');
-            card.className = 'user-card';
+            card.className = 'bg-white border-2 border-black shadow-brutal-md p-4 flex items-center hover:-translate-y-1 hover:shadow-brutal-lg transition-all duration-75 group';
+            
+            // DiceBear Pixel Art avatar
+            const avatarUrl = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(user.name);
+            
             card.innerHTML = `
-                <div class="avatar">
-                    ${user.name.charAt(0).toUpperCase()}
-                    <div class="status-badge" style="background:${statusColor}"></div>
+                <div class="relative mr-4 flex-shrink-0 w-12 h-12 bg-base border-2 border-black">
+                    <img src="${avatarUrl}" alt="Avatar" class="w-full h-full object-cover">
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 border-2 border-black" style="background:${statusColor}"></div>
                 </div>
-                <div class="user-info">
-                    <h3>${escapeHtml(user.name)}</h3>
-                    <p>${escapeHtml(user.customStatus || user.status)}</p>
+                <div class="overflow-hidden">
+                    <h3 class="m-0 text-base font-black uppercase text-black truncate group-hover:text-neonSec">${escapeHtml(user.name)}</h3>
+                    <p class="m-0 text-xs font-bold uppercase text-black opacity-60 truncate">${escapeHtml(user.customStatus || user.status)}</p>
                 </div>
             `;
             grid.appendChild(card);
@@ -206,12 +134,12 @@ $username = $currentUser['username'];
 
     function getStatusColor(status) {
         return {
-            'online': '#4CAF50',
-            'active': '#4CAF50',
-            'away': '#FFC107',
-            'busy': '#ff5252',
-            'offline': '#9E9E9E'
-        }[status] || '#9E9E9E';
+            'online': '#79c753', // Verde neón para Y2K
+            'active': '#79c753',
+            'away': '#e0c253', // Amarillo neón para ausente
+            'busy': '#ff0000', // Rojo brutal
+            'offline': '#000000'
+        }[status] || '#000000';
     }
 
     function escapeHtml(text) {

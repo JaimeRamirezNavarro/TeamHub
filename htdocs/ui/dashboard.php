@@ -89,20 +89,174 @@ if ($selected_team_id) {
 <head>
     <meta charset="UTF-8">
     <title>TeamHub | Dashboard</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { base: '#F2F0E9', neon: '#CCFF00', neonSec: '#00FF00' }, fontFamily: { serif: ['Times New Roman', 'Georgia', 'serif'], mono: ['Courier New', 'Courier', 'monospace'] } } }
+        }
+    </script>
     <style>
         :root {
-            --bg-color: #121212;
-            --sidebar-bg: #1e1e1e;
-            --card-bg: #252525;
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --accent-color: #2196F3;
-            --danger-color: #ff5252;
-            --success-color: #4CAF50;
-            --warning-color: #FFC107;
-            --border-color: #333;
+
+            /* Neo-Brutalist Color Palette */
+            --bg-color: #F2F0E9;
+            --sidebar-bg: #F2F0E9;
+            --card-bg: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #000000;
+            --text-muted: #444444;
+            --accent-color: #CCFF00;
+            --accent-hover: #00FF00;
+            --danger-color: #ff0000;
+            --success-color: #00FF00;
+            --warning-color: #CCFF00;
+            --border-color: #000000;
+            --border-light: #000000;
+            --shadow-sm: 4px 4px 0px 0px rgba(0,0,0,1);
+            --shadow-md: 8px 8px 0px 0px rgba(0,0,0,1);
+            --shadow-lg: 8px 8px 0px 0px rgba(0,0,0,1);
+            --radius-md: 0px;
+            --radius-lg: 0px;
+            --font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Dark Theme Override (Neo-Brutalist High Contrast Inverted - Softened) */
+        body.dark-theme {
+            --bg-color: #050505;
+            --sidebar-bg: #050505;
+            --card-bg: #050505;
+            --text-primary: #a8dba8; /* Soft green */
+            --text-secondary: #e6e6e6;
+            --text-muted: #888888;
+            --border-color: #a8dba8;
+            --border-light: #a8dba8;
+            --shadow-sm: 4px 4px 0px 0px #a8dba8;
+            --shadow-md: 8px 8px 0px 0px #a8dba8;
+            --accent-color: #79c753; /* Slightly darker green for accents */
+            --accent-hover: #ffffff;
+            --danger-color: #d9534f;
+            --success-color: #79c753;
+            --warning-color: #f0ad4e;
+        }
+
+        /* Brutalist Global Overrides */
+        body {
+            background-image: linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px) !important;
+            background-size: 20px 20px !important;
+            color: var(--text-primary);
+        }
+        body.dark-theme {
+            background-image: linear-gradient(to right, rgba(168,219,168,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,219,168,0.15) 1px, transparent 1px) !important;
+        }
+
+        .card, .sidebar, .btn, .form-input, .form-select, .github-widget, .roadmap-widget, .status-select, .online-widget, .user-profile, .brand {
+            border: 2px solid var(--border-color) !important;
+            box-shadow: var(--shadow-sm) !important;
+            transition: none !important;
+        }
+        .sidebar { box-shadow: 4px 0px 0px 0px var(--border-color) !important; border-right: 4px solid var(--border-color) !important; }
+        
+        .btn:active, .online-widget:active, .project-link:active {
+            transform: translate(2px, 2px) !important;
+            box-shadow: none !important;
+        }
+        .btn-primary {
+            background: #000000 !important;
+            color: #CCFF00 !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+        }
+        body.dark-theme .btn-primary {
+            background: var(--text-primary) !important;
+            color: #000000 !important;
+        }
+        .btn-primary:hover {
+            background: #CCFF00 !important;
+            color: #000000 !important;
+        }
+        body.dark-theme .btn-primary:hover {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .project-link { border: 2px solid transparent !important; }
+        .project-link.active {
+            background-color: var(--accent-color) !important;
+            color: #000000 !important;
+            border: 2px solid var(--border-color) !important;
+            box-shadow: 2px 2px 0px 0px var(--border-color) !important;
+        }
+        body.dark-theme .project-link.active {
+            box-shadow: 2px 2px 0px 0px var(--text-primary) !important;
+            background-color: var(--text-primary) !important;
+        }
+        .user-avatar {
+            border: 2px solid var(--border-color) !important;
+            box-shadow: 2px 2px 0px 0px var(--border-color) !important;
+            border-radius: 0 !important;
+            background: var(--text-primary) !important;
+            color: var(--bg-color) !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+        }
+        .project-title { font-family: 'Times New Roman', Georgia, serif !important; font-weight: 900 !important; text-transform: uppercase !important; }
+        
+        * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M0,0 L0,18 L6,12 L9,19.5 L12,18 L9,10.5 L15,10.5 Z'/%3E%3C/svg%3E") 0 0, auto; }
+        a, button, [role="button"], .cursor-pointer, .project-link, .tab, .btn, select, .gh-title, .status-select { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M12,0 L12,7.5 L16.5,7.5 L16.5,10.5 L12,10.5 L12,18 L9,18 L9,10.5 L4.5,10.5 L4.5,7.5 L9,7.5 L9,0 Z M0,9 L4.5,9 L4.5,12 L0,12 Z M16.5,9 L21,9 L21,12 L16.5,12 Z'/%3E%3C/svg%3E") 12 12, pointer !important; }
+        input, textarea { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='24' viewBox='0 0 12 24'%3E%3Crect x='4.5' y='0' width='3' height='24' fill='black'/%3E%3Crect x='0' y='0' width='12' height='3' fill='black'/%3E%3Crect x='0' y='21' width='12' height='3' fill='black'/%3E%3C/svg%3E") 6 12, text !important; }
+
+        /* End Neo-Brutalist */
+
+        body.dark-theme .project-link.active {
+            background-color: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+        }
+        body.dark-theme .project-link:hover {
+            color: #f8fafc;
+        }
+        body.dark-theme .btn-danger {
+            background: transparent;
+        }
+        body.dark-theme .logout-btn {
+            background: transparent;
+        }
+        body.dark-theme .logout-btn:hover {
+            background: rgba(220, 38, 38, 0.1);
+        }
+        body.dark-theme .status-En\.Progreso { 
+            background: rgba(37, 99, 235, 0.2); 
+            color: #93c5fd; 
+            border-color: rgba(37, 99, 235, 0.3); 
+        }
+        body.dark-theme .status-Completado { 
+            background: rgba(22, 163, 74, 0.2); 
+            color: #86efac; 
+            border-color: rgba(22, 163, 74, 0.3); 
+        }
+        body.dark-theme .status-Pausado { 
+            background: rgba(217, 119, 6, 0.2); 
+            color: #fcd34d; 
+            border-color: rgba(217, 119, 6, 0.3); 
+        }
+        body.dark-theme .status-Cancelado { 
+            background: rgba(220, 38, 38, 0.2); 
+            color: #fca5a5; 
+            border-color: rgba(220, 38, 38, 0.3); 
+        }
+        body.dark-theme .form-input, body.dark-theme .form-select, body.dark-theme .status-select {
+            background: #0f172a;
+            color: var(--text-primary);
+        }
+        body.dark-theme .role-badge {
+            background: #334155;
+            color: #cbd5e1;
+        }
+        body.dark-theme .role-admin {
+            background: rgba(217, 119, 6, 0.2);
+            color: #fcd34d;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -363,10 +517,93 @@ if ($selected_team_id) {
         select {
             background: #333;
             color: white;
-            border: 1px solid #444;
-            padding: 8px;
-            border-radius: 4px;
-            outline: none;
+
+        }
+        .phase-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .phase-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 12px;
+            min-height: 40px;
+        }
+        .phase-progress-bar {
+            height: 6px;
+            background: var(--border-light);
+            border-radius: 3px;
+            overflow: hidden;
+            width: 80%;
+            margin: 0 auto;
+        }
+        .phase-progress-fill {
+            height: 100%;
+            background: var(--text-muted);
+            transition: width 0.5s ease;
+        }
+        .roadmap-phase.completed .phase-progress-fill {
+            background: var(--success-color);
+        }
+        .roadmap-phase.active .phase-progress-fill {
+            background: var(--accent-color);
+        }
+
+        /* Online Users Widget */
+        .online-widget {
+            display: block;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        .online-widget:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .online-widget-header {
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 8px;
+        }
+        .online-widget-title {
+            font-weight: 600; 
+            font-size: 0.95rem;
+        }
+        .online-widget-count {
+            background: var(--success-color); 
+            color: black; 
+            font-size: 0.75rem; 
+            padding: 2px 8px; 
+            border: 2px solid black;
+            border-radius: 0px; 
+            font-weight: 800;
+        }
+        .online-widget-footer {
+            font-size: 0.8rem; 
+            color: var(--text-muted); 
+            display: flex; 
+            align-items: center; 
+            gap: 6px;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
         }
 
     </style>
@@ -377,8 +614,10 @@ if ($selected_team_id) {
     <div class="sidebar">
         <div class="brand">TeamHub</div>
         
-        <div class="user-profile">
-            <div class="user-avatar"><?= strtoupper(substr($username, 0, 1)) ?></div>
+        <div class="user-profile" style="margin-bottom: 24px;">
+            <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 0; padding: 0;">
+                <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=<?= urlencode($username) ?>" style="width:100%; height:100%; object-fit:cover;" alt="Avatar">
+            </div>
             <div style="flex:1;">
                 <div style="font-weight:600"><?= htmlspecialchars($username) ?></div>
                 
@@ -499,8 +738,8 @@ if ($selected_team_id) {
                                 <?php foreach ($miembros as $m): ?>
                                     <div class="member-item">
                                         <div class="member-info">
-                                            <div class="user-avatar" style="width:24px; height:24px; font-size:0.8rem; background:#444;">
-                                                <?= strtoupper(substr($m['username'], 0, 1)) ?>
+                                            <div class="user-avatar" style="width:36px; height:36px; padding:0; overflow:hidden;">
+                                                <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=<?= urlencode($m['username']) ?>" style="width:100%; height:100%; object-fit:cover;" alt="Avatar">
                                             </div>
                                             <div>
                                                 <span><?= htmlspecialchars($m['username']) ?></span>
