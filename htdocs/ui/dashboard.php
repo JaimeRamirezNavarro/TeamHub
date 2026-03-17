@@ -19,57 +19,47 @@ $userStatus = $currentUser['status'];
 // Handle Actions (Join/Leave/Update Status/Logout)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['logout'])) {
-        // Clear Remember Me Token in DB
-        if (isset($_SESSION['user_id'])) {
-            $consultas->limpiarToken($_SESSION['user_id']);
-        }
-        
-        // Clear Cookie
+        if (isset($_SESSION['user_id'])) $consultas->limpiarToken($_SESSION['user_id']);
         if (isset($_COOKIE['teamhub_remember'])) {
             setcookie('teamhub_remember', '', time() - 3600, '/');
             unset($_COOKIE['teamhub_remember']);
         }
-
         session_destroy();
         header("Location: login.php");
         exit;
     }
-    
-    // User Status Update
     if (isset($_POST['update_user_status'])) {
         $consultas->actualizarEstado($user_id, $_POST['new_user_status']);
-        // Redirect to same page with query params to avoid form resubmission warning
         $params = $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '';
         header("Location: dashboard.php" . $params);
         exit;
     }
-
-    // Status Update (Manager Only)
     if (isset($_POST['update_status']) && isset($_POST['team_id']) && isset($_POST['new_status'])) {
-        // Double check permissions serverside
         $role = $consultas->obtenerRolUsuario($user_id, $_POST['team_id']);
-        if ($role === 'admin') {
-            $consultas->actualizarEstadoEquipo($_POST['team_id'], $_POST['new_status']);
-        }
+        if ($role === 'admin') $consultas->actualizarEstadoEquipo($_POST['team_id'], $_POST['new_status']);
     }
-
-    // Join/Leave
     if (isset($_POST['join_team'])) {
         $consultas->unirseEquipo($user_id, $_POST['team_id']);
     } elseif (isset($_POST['leave_team'])) {
         $consultas->salirEquipo($user_id, $_POST['team_id']);
     }
-    
-    // Redirect to avoid resubmission, keeping the selected team
+    // Update GitHub Repo (Admin Only)
+    if (isset($_POST['update_github']) && isset($_POST['team_id'])) {
+        $role = $consultas->obtenerRolUsuario($user_id, $_POST['team_id']);
+        if ($role === 'admin') {
+            $repo = trim($_POST['github_repo']);
+            if (empty($repo)) $repo = null;
+            $consultas->vincularGitHub($_POST['team_id'], $repo);
+        }
+    }
     $redirect_team = isset($_POST['team_id']) ? "?team_id=" . $_POST['team_id'] : "";
     header("Location: dashboard.php" . $redirect_team);
     exit;
 }
 
-// Data Handling
+// Data
 $equipos = $consultas->obtenerTodosLosEquipos();
 $selected_team_id = isset($_GET['team_id']) ? $_GET['team_id'] : (count($equipos) > 0 ? $equipos[0]['id'] : null);
-
 $selected_team = null;
 $miembros = [];
 $user_role = null;
@@ -88,542 +78,464 @@ if ($selected_team_id) {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TeamHub | Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: { extend: { colors: { base: '#F2F0E9', neon: '#CCFF00', neonSec: '#00FF00' }, fontFamily: { serif: ['Times New Roman', 'Georgia', 'serif'], mono: ['Courier New', 'Courier', 'monospace'] } } }
-        }
-    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-
-            /* Neo-Brutalist Color Palette */
-            --bg-color: #F2F0E9;
-            --sidebar-bg: #F2F0E9;
-            --card-bg: #ffffff;
-            --text-primary: #000000;
-            --text-secondary: #000000;
-            --text-muted: #444444;
-            --accent-color: #CCFF00;
-            --accent-hover: #00FF00;
-            --danger-color: #ff0000;
-            --success-color: #00FF00;
-            --warning-color: #CCFF00;
-            --border-color: #000000;
-            --border-light: #000000;
-            --shadow-sm: 4px 4px 0px 0px rgba(0,0,0,1);
-            --shadow-md: 8px 8px 0px 0px rgba(0,0,0,1);
-            --shadow-lg: 8px 8px 0px 0px rgba(0,0,0,1);
-            --radius-md: 0px;
-            --radius-lg: 0px;
-            --font-family: 'Courier New', Courier, monospace;
-        }
-
-        /* Dark Theme Override (Neo-Brutalist High Contrast Inverted - Softened) */
-        body.dark-theme {
-            --bg-color: #050505;
-            --sidebar-bg: #050505;
-            --card-bg: #050505;
-            --text-primary: #a8dba8; /* Soft green */
-            --text-secondary: #e6e6e6;
-            --text-muted: #888888;
-            --border-color: #a8dba8;
-            --border-light: #a8dba8;
-            --shadow-sm: 4px 4px 0px 0px #a8dba8;
-            --shadow-md: 8px 8px 0px 0px #a8dba8;
-            --accent-color: #79c753; /* Slightly darker green for accents */
-            --accent-hover: #ffffff;
-            --danger-color: #d9534f;
-            --success-color: #79c753;
-            --warning-color: #f0ad4e;
-        }
-
-        /* Brutalist Global Overrides */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-image: linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px) !important;
-            background-size: 20px 20px !important;
-            color: var(--text-primary);
-        }
-        body.dark-theme {
-            background-image: linear-gradient(to right, rgba(168,219,168,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(168,219,168,0.15) 1px, transparent 1px) !important;
-        }
-
-        .card, .sidebar, .btn, .form-input, .form-select, .github-widget, .roadmap-widget, .status-select, .online-widget, .user-profile, .brand {
-            border: 2px solid var(--border-color) !important;
-            box-shadow: var(--shadow-sm) !important;
-            transition: none !important;
-        }
-        .sidebar { box-shadow: 4px 0px 0px 0px var(--border-color) !important; border-right: 4px solid var(--border-color) !important; }
-        
-        .btn:active, .online-widget:active, .project-link:active {
-            transform: translate(2px, 2px) !important;
-            box-shadow: none !important;
-        }
-        .btn-primary {
-            background: #000000 !important;
-            color: #CCFF00 !important;
-            font-weight: 800 !important;
-            text-transform: uppercase !important;
-        }
-        body.dark-theme .btn-primary {
-            background: var(--text-primary) !important;
-            color: #000000 !important;
-        }
-        .btn-primary:hover {
-            background: #CCFF00 !important;
-            color: #000000 !important;
-        }
-        body.dark-theme .btn-primary:hover {
-            background: #ffffff !important;
-            color: #000000 !important;
-        }
-        .project-link { border: 2px solid transparent !important; }
-        .project-link.active {
-            background-color: var(--accent-color) !important;
-            color: #000000 !important;
-            border: 2px solid var(--border-color) !important;
-            box-shadow: 2px 2px 0px 0px var(--border-color) !important;
-        }
-        body.dark-theme .project-link.active {
-            box-shadow: 2px 2px 0px 0px var(--text-primary) !important;
-            background-color: var(--text-primary) !important;
-        }
-        .user-avatar {
-            border: 2px solid var(--border-color) !important;
-            box-shadow: 2px 2px 0px 0px var(--border-color) !important;
-            border-radius: 0 !important;
-            background: var(--text-primary) !important;
-            color: var(--bg-color) !important;
-            overflow: hidden !important;
-            padding: 0 !important;
-        }
-        .project-title { font-family: 'Times New Roman', Georgia, serif !important; font-weight: 900 !important; text-transform: uppercase !important; }
-        
-        * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M0,0 L0,18 L6,12 L9,19.5 L12,18 L9,10.5 L15,10.5 Z'/%3E%3C/svg%3E") 0 0, auto; }
-        a, button, [role="button"], .cursor-pointer, .project-link, .tab, .btn, select, .gh-title, .status-select { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M12,0 L12,7.5 L16.5,7.5 L16.5,10.5 L12,10.5 L12,18 L9,18 L9,10.5 L4.5,10.5 L4.5,7.5 L9,7.5 L9,0 Z M0,9 L4.5,9 L4.5,12 L0,12 Z M16.5,9 L21,9 L21,12 L16.5,12 Z'/%3E%3C/svg%3E") 12 12, pointer !important; }
-        input, textarea { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='24' viewBox='0 0 12 24'%3E%3Crect x='4.5' y='0' width='3' height='24' fill='black'/%3E%3Crect x='0' y='0' width='12' height='3' fill='black'/%3E%3Crect x='0' y='21' width='12' height='3' fill='black'/%3E%3C/svg%3E") 6 12, text !important; }
-
-        /* End Neo-Brutalist */
-
-        body.dark-theme .project-link.active {
-            background-color: rgba(37, 99, 235, 0.2);
-            color: #60a5fa;
-        }
-        body.dark-theme .project-link:hover {
-            color: #f8fafc;
-        }
-        body.dark-theme .btn-danger {
-            background: transparent;
-        }
-        body.dark-theme .logout-btn {
-            background: transparent;
-        }
-        body.dark-theme .logout-btn:hover {
-            background: rgba(220, 38, 38, 0.1);
-        }
-        body.dark-theme .status-En\.Progreso { 
-            background: rgba(37, 99, 235, 0.2); 
-            color: #93c5fd; 
-            border-color: rgba(37, 99, 235, 0.3); 
-        }
-        body.dark-theme .status-Completado { 
-            background: rgba(22, 163, 74, 0.2); 
-            color: #86efac; 
-            border-color: rgba(22, 163, 74, 0.3); 
-        }
-        body.dark-theme .status-Pausado { 
-            background: rgba(217, 119, 6, 0.2); 
-            color: #fcd34d; 
-            border-color: rgba(217, 119, 6, 0.3); 
-        }
-        body.dark-theme .status-Cancelado { 
-            background: rgba(220, 38, 38, 0.2); 
-            color: #fca5a5; 
-            border-color: rgba(220, 38, 38, 0.3); 
-        }
-        body.dark-theme .form-input, body.dark-theme .form-select, body.dark-theme .status-select {
-            background: #0f172a;
-            color: var(--text-primary);
-        }
-        body.dark-theme .role-badge {
-            background: #334155;
-            color: #cbd5e1;
-        }
-        body.dark-theme .role-admin {
-            background: rgba(217, 119, 6, 0.2);
-            color: #fcd34d;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #EBE8E6;
+            color: #000000;
             height: 100vh;
             display: grid;
-            grid-template-columns: 280px 1fr; /* Sidebar | Main */
-            background-color: var(--bg-color);
-            color: var(--text-primary);
+            grid-template-columns: 260px 1fr;
             overflow: hidden;
+            --bg: #EBE8E6;
+            --surface: #ffffff;
+            --border: #d4d0cd;
+            --text: #000000;
+            --text-muted: #4a4a4a;
+            --text-faint: #7a7a7a;
+            --accent: #052DD4;
+            --accent-alt: #4FC59F;
+            --lime: #CAFB04;
+            --sidebar-bg: rgba(255,255,255,0.85);
+            --card-hover-border: #b0acaa;
+            --divider: #e8e4e1;
+        }
+        body.dark {
+            background: #000000;
+            color: #EBE8E6;
+            --bg: #000000;
+            --surface: #111111;
+            --border: #2a2a2a;
+            --text: #EBE8E6;
+            --text-muted: #a0a0a0;
+            --text-faint: #666666;
+            --accent: #052DD4;
+            --accent-alt: #4FC59F;
+            --lime: #CAFB04;
+            --sidebar-bg: rgba(17,17,17,0.9);
+            --card-hover-border: #3a3a3a;
+            --divider: #1a1a1a;
         }
 
-        /* Sidebar Styles */
+        /* ---------- SIDEBAR ---------- */
         .sidebar {
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 20px 16px;
+            overflow-y: auto;
         }
-
         .brand {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 30px;
-            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 10px;
+            padding: 8px 10px;
+            margin-bottom: 20px;
+        }
+        .brand-icon {
+            width: 32px; height: 32px;
+            background: #052DD4;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .brand-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.02em;
         }
 
+        /* User Profile */
         .user-profile {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 15px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
+            padding: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
             margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            background: var(--accent-color);
+        .user-avatar-wrap { position: relative; flex-shrink: 0; }
+        .user-avatar-img { width: 36px; height: 36px; border-radius: 10px; }
+        .user-status-pip {
+            position: absolute;
+            bottom: -1px; right: -1px;
+            width: 10px; height: 10px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+            background: #4FC59F;
+            border: 2px solid white;
         }
-
-        .status-select {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 2px 5px;
-            font-size: 0.8rem;
-            margin-top: 5px;
-            width: 100%;
-            cursor: pointer;
-        }
-        
-        .status-select:hover {
-            border-color: #666;
-            color: var(--text-primary);
-        }
-
-        .project-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-
-        .project-item {
-            margin-bottom: 5px;
-        }
-
-        .project-link {
-            display: block;
-            padding: 12px 15px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            border-radius: 6px;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
-
-        .project-link:hover {
-            background-color: rgba(255,255,255,0.05);
-            color: var(--text-primary);
-        }
-
-        .project-link.active {
-            background-color: rgba(33, 150, 243, 0.1);
-            color: var(--accent-color);
-            border-left-color: var(--accent-color);
-        }
-
-        .logout-btn {
-            margin-top: auto;
+        .user-name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+        .user-status-select {
+            font-size: 0.75rem;
+            color: #71717a;
             background: none;
-            border: 1px solid var(--danger-color);
-            color: var(--danger-color);
-            padding: 10px;
-            border-radius: 6px;
+            border: none;
+            outline: none;
             cursor: pointer;
-            transition: 0.2s;
+            padding: 0;
             width: 100%;
+            margin-top: 2px;
         }
 
-        .logout-btn:hover {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        /* Main Content Styles */
-        .main-content {
-            padding: 40px;
-            overflow-y: auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .project-title {
-            font-size: 2rem;
-            margin: 0 0 10px 0;
-        }
-
-        .project-status {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+        /* Section label */
+        .section-label {
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-faint);
+            padding: 0 10px;
+            margin-bottom: 6px;
+            margin-top: 8px;
         }
 
-        .status-En.Progreso { background: rgba(33, 150, 243, 0.2); color: #64B5F6; }
-        .status-Completado { background: rgba(76, 175, 80, 0.2); color: #81C784; }
-        .status-Pausado { background: rgba(255, 193, 7, 0.2); color: #FFD54F; }
-        .status-Cancelado { background: rgba(244, 67, 54, 0.2); color: #E57373; }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid var(--border-color);
-        }
-
-        .card h3 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-        }
-
-        .description-text {
-            line-height: 1.6;
-            color: #d0d0d0;
-        }
-
-        /* Members List */
-        .member-list {
+        /* Project nav */
+        .project-list { list-style: none; flex: 1; overflow-y: auto; }
+        .project-item { margin-bottom: 2px; }
+        .project-link {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: background 0.15s, color 0.15s;
+        }
+        .project-link:hover { background: var(--divider); color: var(--text); }
+        .project-link.active { background: rgba(5,45,212,0.08); color: #052DD4; font-weight: 600; }
+
+        /* Logout */
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px 12px;
+            margin-top: auto;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .logout-btn:hover { border-color: #CAFB04; color: #000000; background: rgba(202,251,4,0.12); }
+
+        /* ---------- MAIN CONTENT ---------- */
+        .main-content {
+            padding: 32px;
+            overflow-y: auto;
         }
 
+        /* Header */
+        .content-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e4e4e7;
+            gap: 16px;
+        }
+        .project-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.03em;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-green { background: rgba(79,197,159,0.15); color: #2a8a6e; border: 1px solid rgba(79,197,159,0.3); }
+        .badge-blue  { background: rgba(5,45,212,0.1); color: #052DD4; border: 1px solid rgba(5,45,212,0.2); }
+        .badge-amber { background: rgba(202,251,4,0.15); color: #7a8a00; border: 1px solid rgba(202,251,4,0.3); }
+        .badge-red   { background: rgba(239,68,68,0.1);  color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+        .badge-zinc  { background: rgba(0,0,0,0.06); color: #4a4a4a; border: 1px solid rgba(0,0,0,0.12); }
+
+        /* Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .bento-col { display: flex; flex-direction: column; gap: 20px; }
+
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 2px 4px rgba(0,0,0,0.04), 0 8px 20px rgba(0,0,0,0.04);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .card:hover { border-color: var(--card-hover-border); }
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .card-body { font-size: 0.9rem; color: var(--text-muted); line-height: 1.65; }
+
+        /* Members */
+        .member-list { display: flex; flex-direction: column; gap: 12px; }
         .member-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid var(--divider);
         }
-
-        .member-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .member-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .member-info { display: flex; align-items: center; gap: 10px; }
+        .member-avatar { width: 30px; height: 30px; border-radius: 8px; }
+        .member-name { font-size: 0.875rem; font-weight: 500; color: var(--text); }
+        .role-tag {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 999px;
         }
+        .role-admin { background: rgba(202,251,4,0.2); color: #5a6600; border: 1px solid rgba(202,251,4,0.4); }
+        .role-member { background: rgba(0,0,0,0.05); color: var(--text-muted); border: 1px solid var(--border); }
 
-        .role-badge {
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #333;
-            color: #aaa;
-        }
-
-        .role-admin {
-            background: rgba(255, 152, 0, 0.2);
-            color: #FFB74D;
-        }
-        
-        /* User Status Dot */
-        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .user-status-Oficina { background-color: #4CAF50; }
-        .user-status-Teletrabajo { background-color: #2196F3; }
-        .user-status-Reunión { background-color: #FFC107; }
-        .user-status-Ausente { background-color: #FF5722; }
-        .user-status-Desconectado { background-color: #9E9E9E; }
-        .user-status-En-Gather { background-color: #9C27B0; box-shadow: 0 0 5px #9C27B0; }
-
-
-
-        /* Action Buttons */
-        .action-area {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
+        /* Buttons */
         .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .btn-primary { background: var(--accent-color); color: white; }
-        .btn-primary:hover { background: #1976D2; }
-
-        .btn-danger { background: var(--danger-color); color: white; }
-        .btn-danger:hover { background: #D32F2F; }
-
-        /* Status Select Form */
-        .status-form {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        select {
-            background: #333;
-            color: white;
-
-        }
-        .phase-title {
-            font-weight: 600;
-            font-size: 1rem;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-        .phase-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-            margin-bottom: 12px;
-            min-height: 40px;
-        }
-        .phase-progress-bar {
-            height: 6px;
-            background: var(--border-light);
-            border-radius: 3px;
-            overflow: hidden;
-            width: 80%;
-            margin: 0 auto;
-        }
-        .phase-progress-fill {
-            height: 100%;
-            background: var(--text-muted);
-            transition: width 0.5s ease;
-        }
-        .roadmap-phase.completed .phase-progress-fill {
-            background: var(--success-color);
-        }
-        .roadmap-phase.active .phase-progress-fill {
-            background: var(--accent-color);
-        }
-
-        /* Online Users Widget */
-        .online-widget {
-            display: block;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            text-decoration: none;
-            color: var(--text-primary);
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow-sm);
-        }
-        .online-widget:hover {
-            border-color: var(--accent-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        .online-widget-header {
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            margin-bottom: 8px;
-        }
-        .online-widget-title {
-            font-weight: 600; 
-            font-size: 0.95rem;
-        }
-        .online-widget-count {
-            background: var(--success-color); 
-            color: black; 
-            font-size: 0.75rem; 
-            padding: 2px 8px; 
-            border: 2px solid black;
-            border-radius: 0px; 
-            font-weight: 800;
-        }
-        .online-widget-footer {
-            font-size: 0.8rem; 
-            color: var(--text-muted); 
-            display: flex; 
-            align-items: center; 
-            gap: 6px;
-        }
-        
-        .empty-state {
-            display: flex;
-            flex-direction: column;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            height: 100%;
-            color: var(--text-muted);
-            text-align: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
         }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: #000000; color: white; }
+        .btn-primary:hover { background: #1a1a1a; }
+        .btn-brand { background: #052DD4; color: white; }
+        .btn-brand:hover { background: #0424a8; }
+        .btn-danger { background: white; color: #ef4444; border: 1px solid #fca5a5; }
+        .btn-danger:hover { background: #fef2f2; }
+        .btn-full { width: 100%; }
 
+        /* Status select in form */
+        .status-form { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+        .form-select {
+            flex: 1;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.875rem;
+            color: var(--text);
+            background: var(--surface);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-select:focus { border-color: #052DD4; box-shadow: 0 0 0 3px rgba(5,45,212,0.1); }
+
+        /* Online widget */
+        .online-widget-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            padding: 16px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 12px;
+        }
+        .online-widget-link:hover { border-color: rgba(5,45,212,0.3); box-shadow: 0 4px 12px rgba(5,45,212,0.08); }
+        .online-widget-left { display: flex; align-items: center; gap: 10px; }
+        .online-pulse {
+            width: 8px; height: 8px;
+            background: #4FC59F;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity:1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+        .online-widget-title { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+        .online-count-badge {
+            background: rgba(5,45,212,0.08);
+            color: #052DD4;
+            border: 1px solid rgba(5,45,212,0.2);
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 10px;
+        }
+        .online-widget-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* Dark mode toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .toggle-track {
+            width: 36px; height: 20px;
+            background: #e4e4e7;
+            border-radius: 999px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            outline: none;
+        }
+        .toggle-track.on { background: #052DD4; }
+        .toggle-thumb {
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 16px; height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .toggle-track.on .toggle-thumb { transform: translateX(16px); }
+        body.dark .main-content { background: #000000; }
+
+        .member-status-dot { width: 6px; height: 6px; border-radius: 50%; display:inline-block; margin-left: 4px; }
+        .user-status-Oficina { background:#4FC59F; }
+        .user-status-Teletrabajo { background:#052DD4; }
+        .user-status-Reunión, .user-status-Reunion { background:#CAFB04; }
+        .user-status-Ausente { background:#f97316; }
+        .user-status-Desconectado { background:#888888; }
+
+                /* Roadmap */
+                .roadmap-container {
+                    display: flex;
+                    position: relative;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    padding-top: 8px;
+                }
+                .roadmap-container::before {
+                    content: '';
+                    position: absolute;
+                    top: 33px;
+                    left: 5%; right: 5%;
+                    height: 2px;
+                    background: var(--border);
+                    z-index: 0;
+                }
+                .roadmap-phase { position:relative; flex:1; text-align:center; padding:0 12px; z-index:1; }
+                .phase-dot {
+                    width: 44px; height: 44px;
+                    border-radius: 50%;
+                    background: var(--surface);
+                    border: 3px solid var(--border);
+                    margin: 0 auto 12px;
+                    display: flex; align-items:center; justify-content:center;
+                    font-weight: 700; font-size: 0.85rem;
+                    color: var(--text-muted);
+                    box-shadow: 0 0 0 4px var(--surface);
+                    transition: all 0.3s;
+                }
+                .roadmap-phase.active .phase-dot { border-color:#052DD4; background:rgba(5,45,212,0.08); color:#052DD4; box-shadow:0 0 0 4px var(--surface), 0 0 0 8px rgba(5,45,212,0.12); }
+                .roadmap-phase.completed .phase-dot { border-color:#4FC59F; background:#4FC59F; color:white; }
+                .phase-title { font-weight:600; font-size:0.85rem; color:var(--text); margin-bottom:4px; }
+                .phase-desc { font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:8px; min-height:36px; }
+                .phase-progress-bar { height:4px; background:var(--border); border-radius:2px; overflow:hidden; width:80%; margin:0 auto; }
+                .phase-progress-fill { height:100%; background:var(--text-muted); transition:width 0.5s ease; }
+                .roadmap-phase.completed .phase-progress-fill { background:#4FC59F; }
+                .roadmap-phase.active .phase-progress-fill { background:#052DD4; }
+
+                /* GitHub widget */
+                .github-widget { margin-top:0; border-radius:16px; border:1px solid var(--border); overflow:hidden; background:var(--surface); }
+                .github-header { background:var(--surface); padding:14px 20px; font-weight:600; font-size:0.85rem; display:flex; align-items:center; gap:8px; color:var(--text); border-bottom:1px solid var(--border); }
+                .github-tabs { display:flex; background:var(--surface); border-bottom:1px solid var(--border); }
+                .github-tab { padding:10px 18px; cursor:pointer; color:var(--text-muted); font-size:0.82rem; font-weight:500; transition:0.15s; border-bottom:2px solid transparent; }
+                .github-tab.active { color:#052DD4; border-bottom-color:#052DD4; }
+                .github-tab:hover:not(.active) { color:var(--text); background:var(--divider); }
+                .github-content { max-height:280px; overflow-y:auto; background:var(--surface); }
+                .gh-item { padding:14px 20px; border-bottom:1px solid var(--divider); transition:background 0.15s; }
+                .gh-item:hover { background:var(--divider); }
+                .gh-item:last-child { border-bottom:none; }
+                .gh-title { font-weight:500; font-size:0.85rem; color:var(--text); text-decoration:none; display:block; margin-bottom:3px; }
+                .gh-title:hover { color:#052DD4; }
+                .gh-meta { font-size:0.75rem; color:var(--text-muted); }
+                .gh-loader { text-align:center; color:var(--text-muted); padding:24px; font-size:0.875rem; }
+                .gh-badge { display:inline-flex; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:600; text-transform:uppercase; margin-right:5px; vertical-align:middle; }
+                .gh-badge.open { background:rgba(79,197,159,0.2); color:#1a6b4a; }
+                .gh-badge.closed { background:#fee2e2; color:#991b1b; }
+                .gh-badge.merged { background:rgba(5,45,212,0.1); color:#052DD4; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="brand">TeamHub</div>
-        
-        <div class="user-profile" style="margin-bottom: 24px;">
-            <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 0; padding: 0;">
-                <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=<?= urlencode($username) ?>" style="width:100%; height:100%; object-fit:cover;" alt="Avatar">
+    <aside class="sidebar">
+        <!-- Brand -->
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                </svg>
             </div>
-            <div style="flex:1;">
-                <div style="font-weight:600"><?= htmlspecialchars($username) ?></div>
-                
+            <span class="brand-name">TeamHub</span>
+        </div>
+
+        <!-- User Profile -->
+        <div class="user-profile">
+            <div class="user-avatar-wrap">
+                <img src="https://api.dicebear.com/7.x/thumbs/svg?seed=<?= urlencode($username) ?>&backgroundColor=b6e3f4,c0aede,d1d4f9&radius=12"
+                     class="user-avatar-img" alt="Avatar">
+                <span class="user-status-pip"></span>
+            </div>
+            <div style="flex:1; min-width:0;">
+                <div class="user-name"><?= htmlspecialchars($username) ?></div>
                 <form method="POST">
                     <input type="hidden" name="update_user_status" value="1">
-                    <select name="new_user_status" class="status-select" onchange="this.form.submit()">
+                    <select name="new_user_status" class="user-status-select" onchange="this.form.submit()">
                         <option value="Oficina" <?= $userStatus == 'Oficina' ? 'selected' : '' ?>>Oficina</option>
                         <option value="Teletrabajo" <?= $userStatus == 'Teletrabajo' ? 'selected' : '' ?>>Teletrabajo</option>
                         <option value="Reunión" <?= $userStatus == 'Reunión' ? 'selected' : '' ?>>Reunión</option>
@@ -633,142 +545,314 @@ if ($selected_team_id) {
             </div>
         </div>
 
-        <!-- Gather Widget -->
-        <div id="gather-presence-widget-container" style="margin-bottom: 20px;">
-           <?php include __DIR__ . '/components/widget_online_users.html'; ?>
-        </div>
+        <!-- Online users widget -->
+        <a href="online_users.php" class="online-widget-link">
+            <div class="online-widget-left">
+                <span class="online-pulse"></span>
+                <div>
+                    <div class="online-widget-title">Activos ahora</div>
+                    <div class="online-widget-sub" id="widget-status-text">Cargando...</div>
+                </div>
+            </div>
+            <span class="online-count-badge" id="widget-online-count">—</span>
+        </a>
 
-        <div style="margin-bottom:10px; font-weight:600; color:var(--text-secondary); font-size:0.9rem;">PROYECTOS</div>
-        
+        <!-- Projects -->
+        <div class="section-label">Proyectos</div>
         <ul class="project-list">
             <?php foreach ($equipos as $equipo): ?>
-                <li class="project-item">
-                    <a href="?team_id=<?= $equipo['id'] ?>" class="project-link <?= $selected_team_id == $equipo['id'] ? 'active' : '' ?>">
-                        <?= htmlspecialchars($equipo['name']) ?>
-                    </a>
-                </li>
+            <li class="project-item">
+                <a href="?team_id=<?= $equipo['id'] ?>" class="project-link <?= $selected_team_id == $equipo['id'] ? 'active' : '' ?>">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6">
+                        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 2H8L2 7h20z"/>
+                    </svg>
+                    <?= htmlspecialchars($equipo['name']) ?>
+                </a>
+            </li>
             <?php endforeach; ?>
         </ul>
 
-        <form method="POST">
-            <button type="submit" name="logout" class="logout-btn">Cerrar Sesión</button>
+        <!-- Logout -->
+        <form method="POST" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--divider);">
+            <div class="theme-toggle" style="margin-bottom: 8px;">
+                <span>Modo oscuro</span>
+                <button type="button" class="toggle-track" id="themeBtn" onclick="toggleTheme()">
+                    <span class="toggle-thumb"></span>
+                </button>
+            </div>
+            <button type="submit" name="logout" class="logout-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Cerrar sesión
+            </button>
         </form>
-    </div>
+    </aside>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
+    <!-- MAIN -->
+    <main class="main-content">
         <?php if ($selected_team): ?>
-            <div class="header">
+
+            <!-- Header -->
+            <div class="content-header">
                 <div>
                     <h1 class="project-title"><?= htmlspecialchars($selected_team['name']) ?></h1>
-                    
-                    <?php 
-                        $statusClass = str_replace(' ', '.', $selected_team['status'] ?? 'En.Progreso'); 
+                    <?php
+                        $s = $selected_team['status'] ?? 'En Progreso';
+                        $bclass = match(true) {
+                            str_contains($s, 'Comple') => 'badge-green',
+                            str_contains($s, 'Progres') => 'badge-blue',
+                            str_contains($s, 'Pagus') || str_contains($s, 'Pausad') => 'badge-amber',
+                            str_contains($s, 'Cancel') => 'badge-red',
+                            default => 'badge-zinc'
+                        };
                     ?>
-                    <span class="project-status status-<?= $statusClass ?>">
-                        <?= htmlspecialchars($selected_team['status'] ?? 'En Progreso') ?>
-                    </span>
-                    
+                    <span class="status-badge <?= $bclass ?>"><?= htmlspecialchars($s) ?></span>
                     <?php if ($es_miembro): ?>
-                        <span style="font-size:0.9rem; color:#4CAF50; margin-left:10px;">Eres miembro</span>
+                        <span style="margin-left:10px; font-size:0.8rem; color:#4FC59F; font-weight:500;">● Eres miembro</span>
                     <?php endif; ?>
                 </div>
-
-                <!-- Admin Action: Update Status -->
-                <?php if ($user_role === 'admin'): ?>
-                    <div class="status-modifier">
-                        <!-- Manager Controls could go here, putting them in 'Actions' card instead for cleaner header -->
-                    </div>
-                <?php endif; ?>
             </div>
 
-            <div class="content-grid">
-                
-                <!-- Left Column: Details & Actions -->
-                <div style="display:flex; flex-direction:column; gap:30px;">
+            <!-- Bento Grid -->
+            <div class="bento-grid">
+
+                <!-- Left column -->
+                <div class="bento-col">
+                    <!-- Description -->
                     <div class="card">
-                        <h3>Descripción del Proyecto</h3>
-                        <div class="description-text">
-                            <?= nl2br(htmlspecialchars($selected_team['description'])) ?>
+                        <div class="card-title">Descripción</div>
+                        <div class="card-body"><?= nl2br(htmlspecialchars($selected_team['description'])) ?></div>
+                    </div>
+
+                    <!-- Roadmap Widget -->
+                    <div class="card" id="roadmap-widget" style="padding-bottom:20px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#052DD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                                <span class="card-title" style="margin-bottom:0;">Hoja de Ruta</span>
+                            </div>
+                            <button id="btn-refresh-roadmap" style="display:flex; align-items:center; gap:5px; padding:5px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:0.75rem; font-weight:500; color:var(--text-muted); cursor:pointer; transition:all 0.15s;" onmouseover="this.style.borderColor='#052DD4';this.style.color='#052DD4'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                Actualizar
+                            </button>
+                        </div>
+                        <div id="roadmap-content">
+                            <div class="gh-loader"><div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:#052DD4;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;"></div><br>Generando hoja de ruta...</div>
                         </div>
                     </div>
 
+                    <!-- Admin controls -->
                     <?php if ($user_role === 'admin'): ?>
-                        <div class="card" style="border-color: #444;">
-                            <h3 style="color:var(--accent-color);">Gestión del Proyecto (Manager)</h3>
-                            <p style="font-size:0.9rem; color:#aaa;">Como jefe de proyecto, puedes cambiar el estado actual.</p>
-                            
-                            <form method="POST" class="status-form">
-                                <input type="hidden" name="team_id" value="<?= $selected_team['id'] ?>">
-                                <label for="status">Estado:</label>
-                                <select name="new_status" id="status">
-                                    <option value="En Progreso" <?= ($selected_team['status'] ?? '') == 'En Progreso' ? 'selected' : '' ?>>En Progreso</option>
-                                    <option value="Completado" <?= ($selected_team['status'] ?? '') == 'Completado' ? 'selected' : '' ?>>Completado</option>
-                                    <option value="Pausado" <?= ($selected_team['status'] ?? '') == 'Pausado' ? 'selected' : '' ?>>Pausado</option>
-                                    <option value="Cancelado" <?= ($selected_team['status'] ?? '') == 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
-                                </select>
-                                <button type="submit" name="update_status" class="btn btn-primary" style="padding:8px 15px;">Actualizar</button>
-                            </form>
-                        </div>
+                    <div class="card">
+                        <div class="card-title">Gestión del proyecto</div>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Cambia el estado del proyecto como administrador.</p>
+                        <form method="POST" class="status-form">
+                            <input type="hidden" name="team_id" value="<?= $selected_team['id'] ?>">
+                            <select name="new_status" class="form-select">
+                                <option value="En Progreso" <?= ($selected_team['status'] ?? '') == 'En Progreso' ? 'selected' : '' ?>>En Progreso</option>
+                                <option value="Completado" <?= ($selected_team['status'] ?? '') == 'Completado' ? 'selected' : '' ?>>Completado</option>
+                                <option value="Pausado" <?= ($selected_team['status'] ?? '') == 'Pausado' ? 'selected' : '' ?>>Pausado</option>
+                                <option value="Cancelado" <?= ($selected_team['status'] ?? '') == 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
+                            </select>
+                            <button type="submit" name="update_status" class="btn btn-primary">Actualizar</button>
+                        </form>
+
+                        <hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">
+                        <div style="font-size:0.85rem; font-weight:600; color:var(--text); margin-bottom:4px;">Repositorio GitHub</div>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Formato: <code style="background:var(--divider); padding:1px 5px; border-radius:4px;">usuario/repo</code></p>
+                        <form method="POST" class="status-form">
+                            <input type="hidden" name="team_id" value="<?= $selected_team['id'] ?>">
+                            <input type="hidden" name="update_github" value="1">
+                            <input type="text" name="github_repo" class="form-select" placeholder="Ej. facebook/react" value="<?= htmlspecialchars($selected_team['github_repo'] ?? '') ?>">
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </form>
+                    </div>
                     <?php endif; ?>
                 </div>
 
-                <!-- Right Column: Members & Join -->
-                <div style="display:flex; flex-direction:column; gap:30px;">
-                    
-                    <!-- Join/Leave Actions -->
+                <!-- Right column -->
+                <div class="bento-col">
+                    <!-- Actions -->
                     <div class="card">
-                        <h3>Acciones</h3>
+                        <div class="card-title">Acciones</div>
                         <form method="POST">
                             <input type="hidden" name="team_id" value="<?= $selected_team['id'] ?>">
                             <?php if ($es_miembro): ?>
-                                <button type="submit" name="leave_team" class="btn btn-danger" style="width:100%">Abandonar Proyecto</button>
+                                <button type="submit" name="leave_team" class="btn btn-danger btn-full">Abandonar proyecto</button>
                             <?php else: ?>
-                                <button type="submit" name="join_team" class="btn btn-primary" style="width:100%">Unirse al Proyecto</button>
+                                <button type="submit" name="join_team" class="btn btn-brand btn-full">Unirse al proyecto</button>
                             <?php endif; ?>
                         </form>
                     </div>
 
+                    <!-- Members -->
                     <div class="card">
-                        <h3>👥 Miembros (<?= count($miembros) ?>)</h3>
+                        <div class="card-title">Miembros (<?= count($miembros) ?>)</div>
                         <?php if (empty($miembros)): ?>
-                            <p style="color:#666; font-style:italic;">No hay miembros aún.</p>
+                            <p style="font-size:0.875rem; color:var(--text-muted);">No hay miembros aún.</p>
                         <?php else: ?>
                             <div class="member-list">
                                 <?php foreach ($miembros as $m): ?>
-                                    <div class="member-item">
-                                        <div class="member-info">
-                                            <div class="user-avatar" style="width:36px; height:36px; padding:0; overflow:hidden;">
-                                                <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=<?= urlencode($m['username']) ?>" style="width:100%; height:100%; object-fit:cover;" alt="Avatar">
-                                            </div>
-                                            <div>
-                                                <span><?= htmlspecialchars($m['username']) ?></span>
-                                                <!-- Status Dot for Members -->
-                                                <?php $statusClass = str_replace(' ', '-', $m['status']); ?>
-                                                <span class="status-dot user-status-<?= $statusClass ?>" title="<?= $m['status'] ?>" style="margin-left:5px;"></span>
-                                            </div>
-                                        </div>
-                                        <?php if ($m['role'] === 'admin'): ?>
-                                            <span class="role-badge role-admin">Jefe</span>
-                                        <?php else: ?>
-                                            <span class="role-badge">Trabajador</span>
-                                        <?php endif; ?>
+                                <div class="member-item">
+                                    <div class="member-info">
+                                        <img src="https://api.dicebear.com/7.x/thumbs/svg?seed=<?= urlencode($m['username']) ?>&backgroundColor=b6e3f4,c0aede,d1d4f9&radius=12"
+                                             class="member-avatar" alt="Avatar">
+                                        <span class="member-name"><?= htmlspecialchars($m['username']) ?></span>
+                                        <?php $sc = 'user-status-' . str_replace(' ', '-', $m['status']); ?>
+                                        <span class="member-status-dot <?= $sc ?>"></span>
                                     </div>
+                                    <?php if ($m['role'] === 'admin'): ?>
+                                        <span class="role-tag role-admin">Jefe</span>
+                                    <?php else: ?>
+                                        <span class="role-tag role-member">Miembro</span>
+                                    <?php endif; ?>
+                                </div>
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
                     </div>
-                </div>
 
+                    <!-- GitHub Widget -->
+                    <?php if (!empty($selected_team['github_repo'])): ?>
+                    <div class="github-widget" data-repo="<?= htmlspecialchars($selected_team['github_repo']) ?>">
+                        <div class="github-header">
+                            <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                            <a href="https://github.com/<?= htmlspecialchars($selected_team['github_repo']) ?>" target="_blank" style="color:var(--text); text-decoration:none; font-size:0.85rem;"><?= htmlspecialchars($selected_team['github_repo']) ?></a>
+                        </div>
+                        <div class="github-tabs">
+                            <div class="github-tab active" data-target="commits">Commits</div>
+                            <div class="github-tab" data-target="pulls">Pull Requests</div>
+                            <div class="github-tab" data-target="issues">Issues</div>
+                        </div>
+                        <div class="github-content" id="gh-content-box"><div class="gh-loader">Cargando...</div></div>
+                    </div>
+                    <?php endif; ?>
+                </div>
             </div>
 
         <?php else: ?>
-            <div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">
-                <h2>Selecciona un proyecto de la izquierda para ver detalles</h2>
+            <div class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d4d8" stroke-width="1.5" style="margin: 0 auto 12px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 2H8L2 7h20z"/></svg>
+                <p style="font-weight:600; color:#52525b;">Selecciona un proyecto</p>
+                <p style="margin-top:4px; font-size:0.875rem;">Elige un proyecto del panel lateral para ver sus detalles.</p>
             </div>
         <?php endif; ?>
-    </div>
+    </main>
 
+<script>
+    // Dark mode
+    function applyTheme(dark) {
+        document.body.classList.toggle('dark', dark);
+        const btn = document.getElementById('themeBtn');
+        if (btn) btn.classList.toggle('on', dark);
+        localStorage.setItem('th', dark ? '1' : '0');
+    }
+    function toggleTheme() { applyTheme(!document.body.classList.contains('dark')); }
+    (function() {
+        const saved = localStorage.getItem('th');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(saved !== null ? saved === '1' : prefersDark);
+    })();
+
+    // Online widget
+    fetch('/endpoints/get_online_users.php')
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                document.getElementById('widget-online-count').textContent = (d.online_count || 0);
+                document.getElementById('widget-status-text').textContent = 'Ver detalles →';
+            }
+        }).catch(() => {});
+
+    // GitHub Widget
+    document.addEventListener('DOMContentLoaded', () => {
+        const ghWidget = document.querySelector('.github-widget');
+        if (!ghWidget) return;
+        const repo = ghWidget.dataset.repo;
+        const tabs = document.querySelectorAll('.github-tab');
+        const contentBox = document.getElementById('gh-content-box');
+
+        const loadGitHubData = async (action) => {
+            contentBox.innerHTML = '<div class="gh-loader">Cargando...</div>';
+            try {
+                const res = await fetch(`../endpoints/github_proxy.php?action=${action}&repo=${repo}`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) { contentBox.innerHTML = '<div class="gh-loader">No hay elementos recientes</div>'; return; }
+                let html = '';
+                data.forEach(item => {
+                    if (action === 'commits') {
+                        const msg = item.commit.message.split('\n')[0];
+                        const author = item.commit.author.name;
+                        const date = new Date(item.commit.author.date).toLocaleDateString(undefined, {month:'short',day:'numeric'});
+                        html += `<div class="gh-item"><a href="${item.html_url}" target="_blank" class="gh-title">${msg}</a><div class="gh-meta">por <strong>${author}</strong> &middot; ${date}</div></div>`;
+                    } else if (action === 'pulls') {
+                        const badge = item.state === 'open' ? '<span class="gh-badge open">Abierto</span>' : '<span class="gh-badge merged">Fusionado</span>';
+                        html += `<div class="gh-item"><a href="${item.html_url}" target="_blank" class="gh-title">${item.title}</a><div class="gh-meta">${badge} #${item.number} por ${item.user.login}</div></div>`;
+                    } else if (action === 'issues') {
+                        if (item.pull_request) return;
+                        const badge = item.state === 'open' ? '<span class="gh-badge open">Abierto</span>' : '<span class="gh-badge closed">Cerrado</span>';
+                        html += `<div class="gh-item"><a href="${item.html_url}" target="_blank" class="gh-title">${item.title}</a><div class="gh-meta">${badge} #${item.number} por ${item.user.login}</div></div>`;
+                    }
+                });
+                contentBox.innerHTML = html || '<div class="gh-loader">Sin resultados</div>';
+            } catch { contentBox.innerHTML = '<div class="gh-loader" style="color:#ef4444;">Error cargando datos (repositorio privado o no encontrado)</div>'; }
+        };
+
+        tabs.forEach(tab => tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            loadGitHubData(tab.dataset.target);
+        }));
+        loadGitHubData('commits');
+    });
+
+    // Roadmap
+    let roadmapIsUnloading = false;
+    window.addEventListener('beforeunload', () => { roadmapIsUnloading = true; });
+    document.addEventListener('DOMContentLoaded', async () => {
+        const roadmapWidget = document.getElementById('roadmap-widget');
+        if (!roadmapWidget) return;
+        const teamId = <?= json_encode($selected_team['id'] ?? null) ?>;
+        if (!teamId) return;
+        const contentBox = document.getElementById('roadmap-content');
+        const refreshBtn = document.getElementById('btn-refresh-roadmap');
+
+        const fetchRoadmap = async (forceRefresh = false) => {
+            contentBox.innerHTML = `<div class="gh-loader"><div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:#6366F1;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;"></div><br>Generando hoja de ruta...</div>`;
+            if (refreshBtn) refreshBtn.disabled = true;
+            try {
+                const url = forceRefresh
+                    ? `../endpoints/roadmap_generator.php?team_id=${teamId}&force_refresh=true`
+                    : `../endpoints/roadmap_generator.php?team_id=${teamId}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                const roadmap = data.roadmap;
+                let html = '<div class="roadmap-container">';
+                let hasActive = false;
+                Object.keys(roadmap).forEach((key, i) => {
+                    const phase = roadmap[key];
+                    let cls = '';
+                    if (phase.completado) { cls = 'completed'; }
+                    else if (!hasActive) { cls = 'active'; hasActive = true; }
+                    html += `<div class="roadmap-phase ${cls}"><div class="phase-dot">${phase.completado ? '✓' : i+1}</div><div class="phase-title">${phase.nombre}</div><div class="phase-desc">${phase.desc}</div><div class="phase-progress-bar"><div class="phase-progress-fill" style="width:${phase.avance}%"></div></div><div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;margin-top:4px;">${phase.avance}%</div></div>`;
+                });
+                html += '</div>';
+                if (data.github) {
+                    html += `<div style="margin-top:16px;padding-top:12px;border-top:1px dashed var(--border);display:flex;gap:16px;font-size:0.78rem;color:var(--text-muted);"><span><strong style="color:var(--text);">${data.github.commits}</strong> Commits</span><span><strong style="color:var(--text);">${data.github.prs_closed}</strong> PRs cerrados</span>${data.github.active ? '<span style="color:#10b981;font-weight:600;">● Activo</span>' : ''}</div>`;
+                }
+                contentBox.innerHTML = html;
+            } catch(err) {
+                if (!roadmapIsUnloading) contentBox.innerHTML = `<div style="font-size:0.85rem;color:var(--text-muted);padding:20px 0;">No se pudo cargar la hoja de ruta.<br><small style="color:#ef4444;">${err.message}</small></div>`;
+            }
+            if (refreshBtn) refreshBtn.disabled = false;
+        };
+
+        if (refreshBtn) refreshBtn.addEventListener('click', () => fetchRoadmap(true));
+        fetchRoadmap(false);
+    });
+</script>
 <script src="js/heartbeat.js"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@ require_once __DIR__ . '/../modelo/consultas.php';
 
 // 1. Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
-    header("Location: final_index.php"); // Will be renamed to dashboard.php via router
+    header("Location: dashboard.php");
     exit;
 }
 
@@ -102,132 +102,226 @@ function loginUser($user, $remember, $consultas, $isWelcome = false) {
             theme: {
                 extend: {
                     colors: {
-                        base: '#F2F0E9',
-                        neon: '#a8dba8', /* Soft retro green */
-                        neonSec: '#79c753', /* Muted accent green */
+                        brand: '#052DD4',
+                        panel: '#FFFFFF',
+                        background: '#EBE8E6',
                     },
-                    fontFamily: {
-                        serif: ['Times New Roman', 'Georgia', 'serif'],
-                        mono: ['Courier New', 'Courier', 'monospace'],
-                    },
+                    borderRadius: { '2xl': '1.5rem' },
                     boxShadow: {
-                        'brutal-lg': '8px 8px 0px 0px rgba(0,0,0,1)',
-                        'brutal-md': '4px 4px 0px 0px rgba(0,0,0,1)',
-                        'brutal-sm': '1px 1px 0px 0px rgba(0,0,0,1)',
-                    }
+                        'bento': '0 0 0 1px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.05), 0 12px 24px rgba(0,0,0,0.05)',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
                 }
             }
         }
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Base y Reseteo Brutalista */
-        body { 
-            background: #F2F0E9;
-            color: black;
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            background-image: linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        :root {
+            --bg: #EBE8E6;
+            --surface: #ffffff;
+            --border: #d4d0cd;
+            --text: #000000;
+            --text-muted: #4a4a4a;
+            --text-faint: #7a7a7a;
+            --accent: #052DD4;
+            --lime: #CAFB04;
+            --input-bg: white;
         }
-
-        /* Cursores Pixelados Retro (Windows 95) */
-        * {
-            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M0,0 L0,18 L6,12 L9,19.5 L12,18 L9,10.5 L15,10.5 Z'/%3E%3C/svg%3E") 0 0, auto;
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
         }
-        a, button, [role="button"], .cursor-pointer, input[type="submit"], input[type="button"], input[type="checkbox"], label {
-            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='white' stroke='black' stroke-width='1.5' d='M12,0 L12,7.5 L16.5,7.5 L16.5,10.5 L12,10.5 L12,18 L9,18 L9,10.5 L4.5,10.5 L4.5,7.5 L9,7.5 L9,0 Z M0,9 L4.5,9 L4.5,12 L0,12 Z M16.5,9 L21,9 L21,12 L16.5,12 Z'/%3E%3C/svg%3E") 12 12, pointer !important;
+        body.dark {
+            --bg: #000000;
+            --surface: #111111;
+            --border: #2a2a2a;
+            --text: #EBE8E6;
+            --text-muted: #a0a0a0;
+            --text-faint: #666666;
+            --accent: #052DD4;
+            --lime: #CAFB04;
+            --input-bg: #1a1a1a;
         }
-        input:not([type="checkbox"]), textarea {
-            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='24' viewBox='0 0 12 24'%3E%3Crect x='4.5' y='0' width='3' height='24' fill='black'/%3E%3Crect x='0' y='0' width='12' height='3' fill='black'/%3E%3Crect x='0' y='21' width='12' height='3' fill='black'/%3E%3C/svg%3E") 6 12, text !important;
-        }
-
-        .tab.active { 
-            background: #CCFF00;
-            color: black; 
-        }
-
-        /* Animación de formularios */
         .form-section { display: none; }
         .form-section.active { display: block; }
-
-        input:not([type="checkbox"]) {
-            transition: none;
+        .tab-btn { position: relative; padding-bottom: 12px; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); border: none; background: none; cursor: pointer; }
+        .tab-btn::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #052DD4; transform: scaleX(0); transition: transform 0.2s ease; border-radius: 2px; }
+        .tab-btn.active { color: #052DD4; font-weight: 600; }
+        .tab-btn.active::after { transform: scaleX(1); }
+        /* theme toggle corner */
+        .theme-corner {
+            position: fixed; top: 16px; right: 16px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.75rem; color: var(--text-faint);
         }
-        input:not([type="checkbox"]):focus {
-            background-color: #CCFF00;
+        .toggle-track {
+            width: 36px; height: 20px;
+            background: #e4e4e7;
+            border-radius: 999px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            outline: none;
         }
-
-        .checkbox-group input {
-            accent-color: black;
-            width: 16px;
-            height: 16px;
-            border: 2px solid black;
-            border-radius: 0;
+        .toggle-track.on { background: #052DD4; }
+        .toggle-thumb {
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 16px; height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
+        .toggle-track.on .toggle-thumb { transform: translateX(16px); }
     </style>
 </head>
-<body class="font-mono">
-    <div class="container border-2 border-black rounded-none shadow-brutal-lg bg-base w-full max-w-md p-8 relative">
-        <div class="logo font-serif font-black text-3xl uppercase text-center mb-8 text-black border-b-4 border-black pb-4 inline-block w-full">TeamHub</div>
+<body class="min-h-screen flex items-center justify-center p-4" style="background: radial-gradient(ellipse at 60% 0%, rgba(5,45,212,0.07) 0%, var(--bg) 65%);">
 
-        <?php if($error) echo "<div class='p-3 mb-5 border-2 border-black bg-white text-black font-bold uppercase shadow-brutal-sm text-sm text-center'>⚠️ $error</div>"; ?>
-        <?php if($success) echo "<div class='p-3 mb-5 border-2 border-black bg-neonSec text-black font-bold uppercase shadow-brutal-sm text-sm text-center'>✨ $success</div>"; ?>
-        
-        <div class="tabs flex mb-6 border-2 border-black shadow-brutal-sm bg-white">
-            <div class="tab flex-1 p-2 text-center border-r-2 border-black font-bold uppercase text-xs cursor-pointer hover:bg-neon <?= $active_tab == 'login' ? 'active' : '' ?>" onclick="switchTab('login')">LOGIN.EXE</div>
-            <div class="tab flex-1 p-2 text-center font-bold uppercase text-xs cursor-pointer hover:bg-neon <?= $active_tab == 'register' ? 'active' : '' ?>" onclick="switchTab('register')">NEW_USER.BAT</div>
+    <!-- Dark mode toggle -->
+    <div class="theme-corner">
+        <span id="themeLabel">🌙</span>
+        <button type="button" class="toggle-track" id="themeBtn" onclick="toggleTheme()">
+            <span class="toggle-thumb"></span>
+        </button>
+    </div>
+
+    <div class="w-full max-w-sm">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand mb-4" style="box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 12px rgba(5,45,212,0.3);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-zinc-900 tracking-tight">TeamHub</h1>
+            <p class="text-sm text-zinc-500 mt-1">Tu espacio de trabajo compartido</p>
         </div>
 
-        <div id="login-form" class="form-section <?= $active_tab == 'login' ? 'active' : '' ?>">
-            <form method="POST">
-                <input type="text" name="identifier" placeholder="USER_ID / EMAIL" required class="w-full p-3 mb-4 border-2 border-black bg-white focus:outline-none placeholder-black placeholder-opacity-40 text-black font-bold uppercase text-sm shadow-brutal-sm">
-                <input type="password" name="password" placeholder="PASSWORD" required class="w-full p-3 mb-4 border-2 border-black bg-white focus:outline-none placeholder-black placeholder-opacity-40 text-black font-bold uppercase text-sm shadow-brutal-sm">
-                
-                <div class="flex justify-between items-center mb-6 text-xs font-bold uppercase font-mono mt-2">
-                    <label class="flex items-center cursor-pointer hover:text-neonSec">
-                        <input type="checkbox" name="remember_me" id="remember_me" checked class="mr-2 border-2 border-black rounded-none cursor-pointer">
-                        <span class="mt-1">SAVE_STATE</span>
-                    </label>
-                    <a href="#" class="text-black hover:bg-black hover:text-white px-1 py-0.5 border border-transparent hover:border-black transition-none">SYS_RECOVERY?</a>
-                </div>
-                
-                <button type="submit" name="login" class="w-full p-3 border-2 border-black bg-black text-neon font-bold uppercase hover:bg-neon hover:text-black active:translate-x-[2px] active:translate-y-[2px] shadow-brutal-md active:shadow-none transition-none tracking-widest text-lg">
-                    > EXECUTE
-                </button>
-            </form>
+        <!-- Card -->
+        <div style="background: var(--surface); border-radius:24px; padding:32px; box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.05), 0 12px 24px rgba(0,0,0,0.05);">
+
+            <?php if($error): ?>
+            <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; margin-bottom:20px; background: #fef2f2; border: 1px solid #fecaca; border-radius:12px; color:#dc2626; font-size:0.875rem; font-weight:500;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                <?= htmlspecialchars($error) ?>
+            </div>
+            <?php endif; ?>
+            <?php if($success): ?>
+            <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; margin-bottom:20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius:12px; color:#15803d; font-size:0.875rem; font-weight:500;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <?= htmlspecialchars($success) ?>
+            </div>
+            <?php endif; ?>
+
+            <!-- Tabs -->
+            <div style="display:flex; border-bottom: 1px solid var(--border); margin-bottom:24px; gap:20px;">
+                <button onclick="switchTab('login')" id="tab-login" class="tab-btn <?= $active_tab == 'login' ? 'active' : '' ?>">Iniciar sesión</button>
+                <button onclick="switchTab('register')" id="tab-register" class="tab-btn <?= $active_tab == 'register' ? 'active' : '' ?>">Crear cuenta</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="form-section <?= $active_tab == 'login' ? 'active' : '' ?>">
+                <form method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">Usuario o email</label>
+                        <input type="text" name="identifier" placeholder="nombre@empresa.com" required
+                            style="width:100%; padding: 11px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 0.875rem; color: var(--text); background: var(--input-bg); outline: none; transition: box-shadow 0.15s, border-color 0.15s;"
+                            onfocus="this.style.borderColor='#052DD4'; this.style.boxShadow='0 0 0 3px rgba(5,45,212,0.15)'"
+                            onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">Contraseña</label>
+                        <input type="password" name="password" placeholder="••••••••" required
+                            style="width:100%; padding: 11px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 0.875rem; color: var(--text); background: var(--input-bg); outline: none; transition: box-shadow 0.15s, border-color 0.15s;"
+                            onfocus="this.style.borderColor='#052DD4'; this.style.boxShadow='0 0 0 3px rgba(5,45,212,0.15)'"
+                            onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
+                    </div>
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="flex items-center gap-2 text-sm text-zinc-500 cursor-pointer select-none">
+                            <input type="checkbox" name="remember_me" checked style="width:15px; height:15px; accent-color: #052DD4; cursor:pointer;">
+                            Recordarme
+                        </label>
+                        <a href="#" class="text-xs text-brand font-medium transition-colors" style="color:#052DD4;">¿Olvidaste tu contraseña?</a>
+                    </div>
+                    <button type="submit" name="login"
+                        style="width:100%; padding: 12px; background: #000000; color: white; border: none; border-radius: 12px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 4px;"
+                        onmouseover="this.style.background='#1a1a1a'"
+                        onmouseout="this.style.background='#000000'"
+                        onmousedown="this.style.transform='scale(0.97)'"
+                        onmouseup="this.style.transform='scale(1)'">
+                        Iniciar sesión
+                    </button>
+                </form>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="form-section <?= $active_tab == 'register' ? 'active' : '' ?>">
+                <form method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">Nombre de usuario</label>
+                        <input type="text" name="username" placeholder="john_doe" required
+                            style="width:100%; padding: 11px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 0.875rem; color: var(--text); background: var(--input-bg); outline: none; transition: box-shadow 0.15s, border-color 0.15s;"
+                            onfocus="this.style.borderColor='#052DD4'; this.style.boxShadow='0 0 0 3px rgba(5,45,212,0.15)'"
+                            onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">Email</label>
+                        <input type="email" name="email" placeholder="nombre@empresa.com" required
+                            style="width:100%; padding: 11px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 0.875rem; color: var(--text); background: var(--input-bg); outline: none; transition: box-shadow 0.15s, border-color 0.15s;"
+                            onfocus="this.style.borderColor='#052DD4'; this.style.boxShadow='0 0 0 3px rgba(5,45,212,0.15)'"
+                            onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-zinc-400 mb-1.5">Contraseña</label>
+                        <input type="password" name="password" placeholder="••••••••" required
+                            style="width:100%; padding: 11px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 0.875rem; color: var(--text); background: var(--input-bg); outline: none; transition: box-shadow 0.15s, border-color 0.15s;"
+                            onfocus="this.style.borderColor='#052DD4'; this.style.boxShadow='0 0 0 3px rgba(5,45,212,0.15)'"
+                            onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
+                    </div>
+                    <button type="submit" name="register"
+                        style="width:100%; padding: 12px; background: #052DD4; color: white; border: none; border-radius: 12px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 4px;"
+                        onmouseover="this.style.background='#0424a8'"
+                        onmouseout="this.style.background='#052DD4'"
+                        onmousedown="this.style.transform='scale(0.97)'"
+                        onmouseup="this.style.transform='scale(1)'">
+                        Crear cuenta
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <div id="register-form" class="form-section <?= $active_tab == 'register' ? 'active' : '' ?>">
-            <form method="POST">
-                <input type="text" name="username" placeholder="NEW_USER_ID" required class="w-full p-3 mb-4 border-2 border-black bg-white focus:outline-none placeholder-black placeholder-opacity-40 text-black font-bold uppercase text-sm shadow-brutal-sm">
-                <input type="email" name="email" placeholder="CONTACT_ADDRESS" required class="w-full p-3 mb-4 border-2 border-black bg-white focus:outline-none placeholder-black placeholder-opacity-40 text-black font-bold uppercase text-sm shadow-brutal-sm">
-                <input type="password" name="password" placeholder="SECURE_KEY" required class="w-full p-3 mb-6 border-2 border-black bg-white focus:outline-none placeholder-black placeholder-opacity-40 text-black font-bold uppercase text-sm shadow-brutal-sm">
-                
-                <button type="submit" name="register" class="w-full p-3 border-2 border-black bg-white text-black font-bold uppercase hover:bg-neonSec hover:text-black active:translate-x-[2px] active:translate-y-[2px] shadow-brutal-md active:shadow-none transition-none tracking-widest text-lg mt-2">
-                    > COMPILE
-                </button>
-            </form>
-        </div>
+        <p class="text-center text-xs text-zinc-400 mt-6">© <?= date('Y') ?> TeamHub. Todos los derechos reservados.</p>
     </div>
 
     <script>
         function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
             document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
             document.getElementById(tab + '-form').classList.add('active');
         }
-        
-        // Efectos de sonido (opcional, como pedía la guía)
-        const clickSound = new Audio('data:audio/mp3;base64,//OExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'); // Placeholder mp3 silent
-        document.querySelectorAll('button, .tab, input[type="checkbox"]').forEach(el => {
-            el.addEventListener('mousedown', () => {
-                // Play sound if you have real audios
-            });
-        });
+        function applyTheme(dark) {
+            document.body.classList.toggle('dark', dark);
+            const btn = document.getElementById('themeBtn');
+            if (btn) btn.classList.toggle('on', dark);
+            document.getElementById('themeLabel').textContent = dark ? '☀️' : '🌙';
+            localStorage.setItem('th', dark ? '1' : '0');
+        }
+        function toggleTheme() { applyTheme(!document.body.classList.contains('dark')); }
+        (function() {
+            const saved = localStorage.getItem('th');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(saved !== null ? saved === '1' : prefersDark);
+        })();
     </script>
 </body>
 </html>
