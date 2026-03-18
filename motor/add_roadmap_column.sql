@@ -1,1 +1,0 @@
-ALTER TABLE teams ADD COLUMN ai_roadmap JSON DEFAULT NULL;

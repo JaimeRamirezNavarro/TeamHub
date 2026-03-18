@@ -1,0 +1,127 @@
+body {
+  font-family: "Inter", sans-serif;
+  background: #121212;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  color: white;
+}
+.container {
+  background: #1e1e1e;
+  padding: 2.5rem;
+  border-radius: 16px;
+  border: 1px solid #333;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.logo {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2196f3;
+}
+.logo span {
+  color: white;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 25px;
+  background: #252525;
+  padding: 4px;
+  border-radius: 8px;
+}
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  color: #888;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: 0.2s;
+  font-size: 0.9rem;
+}
+.tab.active {
+  background: #333;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.form-section {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.form-section.active {
+  display: block;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: white;
+  box-sizing: border-box;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: 0.2s;
+}
+input:focus {
+  outline: none;
+  border-color: #2196f3;
+  background: #333;
+}
+
+.btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-primary {
+  background: #2196f3;
+  color: white;
+}
+.btn-primary:hover {
+  background: #1976d2;
+  transform: translateY(-1px);
+}
+
+.msg {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.error {
+  background: rgba(255, 82, 82, 0.1);
+  color: #ff5252;
+  border: 1px solid rgba(255, 82, 82, 0.2);
+}
+.success {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
