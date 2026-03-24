@@ -486,6 +486,44 @@ body {
   background: #1f2937;
 }
 
+/* ================================
+   NAV LIST
+================================ */
+.nav-list,
+.project-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-list li,
+.project-list li {
+  margin-bottom: 4px;
+}
+
+/* =================================
+  LINKS
+  ================================
+  */
+.project-link {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.project-link:hover {
+  background: var(--hover-bg);
+}
+
+.project-link.active {
+  background: var(--accent);
+  color: white;
+}
+
 /* --- Logout Button --- */
 
 .logout-container {

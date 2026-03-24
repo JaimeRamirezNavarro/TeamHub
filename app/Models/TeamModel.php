@@ -187,4 +187,15 @@ class TeamModel
 
         return $teamId;
     }
+
+    public function eliminar($team_id)
+    {
+        // Eliminar miembros del equipo
+        $stmt = $this->db->prepare("DELETE FROM team_members WHERE team_id = ?");
+        $stmt->execute([$team_id]);
+
+        // Eliminar el equipo
+        $stmt = $this->db->prepare("DELETE FROM teams WHERE id = ?");
+        return $stmt->execute([$team_id]);
+    }
 }

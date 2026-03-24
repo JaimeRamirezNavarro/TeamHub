@@ -110,12 +110,12 @@ class TeamController
     {
         Auth::requireRole(['admin', 'manager']);
 
-        $user = $_SESSION['user'];
+        $usuario = $_SESSION['user'];
 
         // Equipos para el sidebar
         $equipos = $this->teams->obtenerEquiposPorUsuario(
-            $user['id'],
-            $user['role']
+            $usuario['id'],
+            $usuario['role']
         );
 
         $title = "Crear Equipo";
@@ -126,6 +126,7 @@ class TeamController
 
         require __DIR__ . '/../Views/layouts/main.php';
     }
+
 
     /* ============================
        GUARDAR EQUIPO
@@ -149,6 +150,40 @@ class TeamController
         header("Location: " . BASE_PATH . "/teams");
         exit;
     }
+
+    /* ============================
+   ELIMINAR EQUIPO
+============================ */
+    public function delete()
+    {
+        // Solo admin o manager pueden eliminar equipos
+        Auth::requireRole(['admin', 'manager']);
+
+        // Asegurar que viene por POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            die("Método no permitido.");
+        }
+
+        $team_id = $_POST['team_id'] ?? null;
+
+        if (!$team_id) {
+            die("ID de equipo no proporcionado.");
+        }
+
+        // Verificar que el equipo existe
+        if (!$this->teams->obtener($team_id)) {
+            die("El equipo no existe.");
+        }
+
+        // Eliminar equipo (y sus miembros)
+        $this->teams->eliminar($team_id);
+
+        // Redirigir a la lista de todos los equipos
+        header("Location: " . BASE_PATH . "/teams/all");
+        exit;
+    }
+
 
     /* ============================
        ACTUALIZAR ESTADO

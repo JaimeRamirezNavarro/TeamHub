@@ -7,7 +7,26 @@ $isLogged = isset($_SESSION['user']);
 $currentRoute = strtok($_SERVER['REQUEST_URI'], '?');
 $publicRoutes = ['/login', '/register'];
 $isPublic = in_array($currentRoute, $publicRoutes);
+
+
+$usuario = $usuario ?? ($_SESSION['user'] ?? null);
+
+
+if (!isset($equipos)) {
+    require_once __DIR__ . '/../../Models/TeamModel.php';
+    $teamModel = new TeamModel();
+
+    if ($usuario) {
+        $equipos = $teamModel->obtenerEquiposPorUsuario(
+            $usuario['id'],
+            $usuario['role']
+        );
+    } else {
+        $equipos = [];
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 

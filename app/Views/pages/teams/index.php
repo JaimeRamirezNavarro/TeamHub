@@ -31,9 +31,6 @@
         <div class="admin-grid">
             <?php foreach ($equipos as $equipo): ?>
                 <a href="<?= BASE_PATH ?>/teams/<?= $equipo['id'] ?>" class="admin-card">
-
-                    <div class="admin-icon">👥</div>
-
                     <div>
                         <div class="admin-card-title">
                             <?= htmlspecialchars($equipo['name']) ?>
