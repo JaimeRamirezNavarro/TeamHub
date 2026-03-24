@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../Models/UserModel.php';
+require_once __DIR__ . '/../Middleware/Auth.php';
+
 
 class UserController
 {
@@ -93,5 +95,42 @@ class UserController
     public function actualizarEstado($id, $estado)
     {
         return $this->users->actualizarEstado($id, $estado);
+    }
+
+    public function editRole($user_id)
+    {
+        Auth::requireRole(['admin']);
+
+        $usuario = $_SESSION['user'];
+        $usuarioEditar = $this->users->obtenerUsuario($user_id);
+
+        if (!$usuarioEditar) {
+            die("Usuario no encontrado.");
+        }
+
+        $title = "Cambiar rol";
+
+        ob_start();
+        require __DIR__ . '/../Views/pages/users/edit_role.php';
+        $content = ob_get_clean();
+
+        require __DIR__ . '/../Views/layouts/main.php';
+    }
+
+    public function updateRole()
+    {
+        Auth::requireRole(['admin']);
+
+        $user_id = $_POST['user_id'];
+        $role = $_POST['role'];
+
+        if (!in_array($role, ['user', 'manager', 'admin'])) {
+            die("Rol inválido.");
+        }
+
+        $this->users->actualizarRol($user_id, $role);
+
+        header("Location: " . BASE_PATH . "/users");
+        exit;
     }
 }

@@ -28,21 +28,43 @@
 
 /* Dark Theme Override */
 body.dark-theme {
+  /* Fondo general */
   --bg-color: #0f172a;
   --sidebar-bg: #1e293b;
   --card-bg: #1e293b;
+
+  /* Texto */
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #64748b;
+
+  /* Bordes */
   --border-color: #334155;
   --border-light: #475569;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-md:
     0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
 
-  /* Status overrides for better contrast in dark mode */
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
+  /* Hover */
+  --hover-bg: #2a3648;
+
+  /* Inputs */
+  --input-bg: #1e293b;
+  --input-bg-focus: #243044;
+
+  /* Botón primario */
+  --accent-color: #4a8cff;
+  --accent-hover: #3a78e0;
+
+  /* Botón de acción (azul) */
+  --primary-color: #4a6cf7;
+
+  /* Botón de peligro (rojo brillante para modo oscuro) */
+  --danger-color: #ff4d5e;
+  --danger-hover: #ff2f45;
+  --danger-active: #e01e32;
 }
 
 body.dark-theme .project-link.active {
@@ -52,15 +74,14 @@ body.dark-theme .project-link.active {
 body.dark-theme .project-link:hover {
   color: #f8fafc;
 }
-body.dark-theme .btn-danger {
-  background: transparent;
-}
+
 body.dark-theme .logout-btn {
   background: transparent;
 }
 body.dark-theme .logout-btn:hover {
   background: rgba(220, 38, 38, 0.1);
 }
+
 body.dark-theme .status-En\.Progreso {
   background: rgba(37, 99, 235, 0.2);
   color: #93c5fd;
@@ -469,13 +490,25 @@ body {
   background: var(--accent-hover);
 }
 
+/* Botón de peligro fuerte */
 .btn-danger {
-  background: #ffffff;
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
-}
-.btn-danger:hover {
-  background: #fef2f2;
+  background: #d7263d; /* rojo más agresivo */
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 0 0 rgba(215, 38, 61, 0.4);
 }
 
 .btn-dark {

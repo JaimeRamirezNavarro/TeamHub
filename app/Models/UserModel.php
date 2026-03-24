@@ -75,4 +75,10 @@ class UserModel
         $stmt = $this->db->query("SELECT * FROM users ORDER BY id DESC");
         return $stmt->fetchAll();
     }
+
+    public function actualizarRol($user_id, $role)
+    {
+        $stmt = $this->db->prepare("UPDATE users SET role = ? WHERE id = ?");
+        return $stmt->execute([$role, $user_id]);
+    }
 }

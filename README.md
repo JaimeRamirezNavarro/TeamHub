@@ -25,21 +25,21 @@
 
 ## ✨ Características Principales
 
--   🚀 **Gestión de Proyectos Intuitiva**: Visualización clara de proyectos con descripciones detalladas y sistema de estados (*En Progreso, Completado, Pausado, Cancelado*).
--   👥 **Presencia en Tiempo Real**: Visualización dinámica de usuarios conectados, ausentes o desconectados con actualización automática.
--   🔐 **Roles y Permisos**:
-    -   **Admin**: Control total del sistema y configuración.
-    -   **Jefe de Proyecto**: Gestión estratégica de equipos y estados.
-    -   **Trabajador**: Visualización y colaboración enfocada.
--   🎨 **Interfaz Premium**: Diseño *Dark Mode* moderno, responsivo y optimizado para una experiencia de usuario fluida.
+- 🚀 **Gestión de Proyectos Intuitiva**: Visualización clara de proyectos con descripciones detalladas y sistema de estados (_En Progreso, Completado, Pausado, Cancelado_).
+- 👥 **Presencia en Tiempo Real**: Visualización dinámica de usuarios conectados, ausentes o desconectados con actualización automática.
+- 🔐 **Roles y Permisos**:
+  - **Admin**: Control total del sistema y configuración.
+  - **Jefe de Proyecto**: Gestión estratégica de equipos y estados.
+  - **Trabajador**: Visualización y colaboración enfocada.
+- 🎨 **Interfaz Premium**: Diseño _Dark Mode_ moderno, responsivo y optimizado para una experiencia de usuario fluida.
 
 ## 🛠️ Stack Tecnológico
 
--   **Backend**: PHP 8.2 (Estructura organizada en `/app`).
--   **Base de Datos**: MySQL 8.0.
--   **Infraestructura**: Docker & Docker Compose.
--   **Servidor**: Apache con `mod_rewrite`.
--   **Frontend**: Vanilla JS (AJAX), CSS Moderno.
+- **Backend**: PHP 8.2 (Estructura organizada en `/app`).
+- **Base de Datos**: MySQL 8.0.
+- **Infraestructura**: Docker & Docker Compose.
+- **Servidor**: Apache con `mod_rewrite`.
+- **Frontend**: Vanilla JS (AJAX), CSS Moderno.
 
 ## 📂 Estructura del Proyecto
 
@@ -59,6 +59,7 @@ TeamHub/
 Sigue estos pasos para tener **TeamHub** funcionando en menos de 5 minutos:
 
 1.  **Clonar el repositorio**:
+
     ```bash
     git clone https://github.com/JaimeRamirezNavarro/TeamHub.git
     cd TeamHub
@@ -68,14 +69,15 @@ Sigue estos pasos para tener **TeamHub** funcionando en menos de 5 minutos:
     Copia `config/db_config.example.php` a `config/db_config.php` y ajusta tus credenciales si no usas los valores por defecto de Docker.
 
 3.  **Iniciar con Docker**:
+
     ```bash
     docker-compose up -d
     ```
 
 4.  **Acceder a la plataforma**:
-    -   **Web**: [http://localhost:8080](http://localhost:8080)
-    -   **Base de Datos**: Puerto `3306` (Root Pass: `root`)
-    -   **phpMyAdmin**: [http://localhost:8081](http://localhost:8081)
+    - **Web**: [http://localhost:8080](http://localhost:8080)
+    - **Base de Datos**: Puerto `3306` (Root Pass: `root`)
+    - **phpMyAdmin**: [http://localhost:8081](http://localhost:8081)
 
 ---
 

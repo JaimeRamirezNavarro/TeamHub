@@ -184,6 +184,44 @@ class TeamController
         exit;
     }
 
+    public function addMemberForm($team_id)
+    {
+        Auth::requireRole(['admin', 'manager']);
+
+        $team = $this->teams->obtener($team_id);
+        if (!$team) die("Equipo no encontrado.");
+
+        // Obtener usuarios que NO están en el equipo
+        $users = $this->teams->usuariosDisponibles($team_id);
+
+        require __DIR__ . '/../Views/pages/teams/add-member.php';
+    }
+
+    public function addMemberStore($team_id)
+    {
+        Auth::requireRole(['admin', 'manager']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            die("Método no permitido.");
+        }
+
+        $user_ids = $_POST['user_ids'] ?? [];
+
+        if (empty($user_ids)) {
+            die("No seleccionaste ningún usuario.");
+        }
+
+        foreach ($user_ids as $uid) {
+            $this->teams->unirse($uid, $team_id);
+        }
+
+        header("Location: " . BASE_PATH . "/teams/$team_id");
+        exit;
+    }
+
+
+
 
     /* ============================
        ACTUALIZAR ESTADO
@@ -201,6 +239,28 @@ class TeamController
 
         $this->teams->actualizarEstado($team_id, $status);
 
+        header("Location: " . BASE_PATH . "/teams/$team_id");
+        exit;
+    }
+
+    public function removeMember($team_id, $user_id)
+    {
+        Auth::requireRole(['admin', 'manager']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            die("Método no permitido.");
+        }
+
+        // Verificar que el usuario pertenece al equipo
+        if (!$this->teams->esMiembro($user_id, $team_id)) {
+            die("El usuario no pertenece a este equipo.");
+        }
+
+        // Eliminar del equipo
+        $this->teams->salir($user_id, $team_id);
+
+        // Redirigir de vuelta al equipo
         header("Location: " . BASE_PATH . "/teams/$team_id");
         exit;
     }

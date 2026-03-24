@@ -140,6 +140,13 @@ switch ($uri) {
             break;
         }
 
+        // Eliminar equipo (POST)
+        if (preg_match('#^/teams/([0-9]+)/delete$#', $uri, $m)) {
+            (new TeamController())->delete();
+            break;
+        }
+
+
         // --------------------------------------------------------
         // USUARIOS (solo admin)
         // --------------------------------------------------------
@@ -157,6 +164,35 @@ switch ($uri) {
             (new UserController())->store();
             break;
         }
+
+        if (preg_match('#^/users/([0-9]+)/edit-role$#', $uri, $m)) {
+            (new UserController())->editRole($m[1]);
+            break;
+        }
+
+        if ($uri === '/users/update-role') {
+            (new UserController())->updateRole();
+            break;
+        }
+
+        // Mostrar formulario para añadir miembro
+        if (preg_match('#^/teams/([0-9]+)/add-member$#', $uri, $m)) {
+            (new TeamController())->addMemberForm($m[1]);
+            break;
+        }
+
+        // Guardar miembro añadido
+        if (preg_match('#^/teams/([0-9]+)/add-member/store$#', $uri, $m)) {
+            (new TeamController())->addMemberStore($m[1]);
+            break;
+        }
+        // Eliminar miembro (POST)
+        if (preg_match('#^/teams/([0-9]+)/remove-member/([0-9]+)$#', $uri, $m)) {
+            (new TeamController())->removeMember($m[1], $m[2]);
+            break;
+        }
+
+
 
         // --------------------------------------------------------
         // 404

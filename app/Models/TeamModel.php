@@ -76,7 +76,7 @@ class TeamModel
     public function obtenerMiembros($team_id)
     {
         $stmt = $this->db->prepare("
-            SELECT u.id, u.username, u.status, u.last_activity, tm.role
+            SELECT u.id, u.username, u.email, u.status, u.last_activity, tm.role
             FROM users u
             JOIN team_members tm ON u.id = tm.user_id
             WHERE tm.team_id = ?
@@ -100,6 +100,19 @@ class TeamModel
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $result['role'] ?? null;
+    }
+
+    public function usuariosDisponibles($team_id)
+    {
+        $stmt = $this->db->prepare("
+        SELECT u.id, u.username, u.email
+        FROM users u
+        WHERE u.id NOT IN (
+            SELECT user_id FROM team_members WHERE team_id = ?
+        )
+    ");
+        $stmt->execute([$team_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /* ============================================================
