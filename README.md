@@ -39,20 +39,20 @@ graph TD
     E -- Sí --> F[Actualizar Estado a 'Oficina']
     F --> G[Dashboard Principal]
     B -- Sí --> G
-    
+
     G --> H[Gestión de Equipos]
     H --> I{Acción}
     I -- Crear Equipo --> J[Formulario de Creación]
     J --> K[Guardar Equipo en DB]
     K --> L[Ver Detalle del Equipo]
-    
+
     I -- Añadir Miembro --> M[Seleccionar Usuarios]
     M --> N[Vincular a Equipo]
     N --> L
-    
+
     I -- Actualizar Estado --> O[Cambiar Estado Proyect]
     O --> L
-    
+
     G --> P[Logout]
     P --> Q[Limpiar Sesión y Cookies]
     Q --> A
@@ -62,14 +62,14 @@ graph TD
 
 ## ✨ Características Principales
 
-*   🚀 **Gestión de Proyectos Intuitiva**: Control total sobre el ciclo de vida de los proyectos con estados dinámicos (_En Progreso, Completado, Pausado, Cancelado_).
-*   👥 **Colaboración en Tiempo Real**: Visualización dinámica de la presencia de los miembros del equipo (Conectado, Ausente, Desconectado) con actualizaciones automáticas.
-*   🔐 **Sistema de Roles Robusto**:
-    *   **Admin**: Administración global, gestión de usuarios y configuración del sistema.
-    *   **Manager / Jefe de Proyecto**: Creación de equipos, asignación de miembros y control estratégico.
-    *   **Trabajador**: Acceso a proyectos asignados y herramientas de colaboración enfocadas.
-*   🎨 **Interfaz Premium**: Diseño moderno optimizado para la productividad, con transiciones fluidas y una estética profesional.
-*   🔗 **Integración con GitHub**: Vinculación directa de repositorios a equipos para un seguimiento técnico centralizado.
+- 🚀 **Gestión de Proyectos Intuitiva**: Control total sobre el ciclo de vida de los proyectos con estados dinámicos (_En Progreso, Completado, Pausado, Cancelado_).
+- 👥 **Colaboración en Tiempo Real**: Visualización dinámica de la presencia de los miembros del equipo (Conectado, Ausente, Desconectado) con actualizaciones automáticas.
+- 🔐 **Sistema de Roles Robusto**:
+  - **Admin**: Administración global, gestión de usuarios y configuración del sistema.
+  - **Manager / Jefe de Proyecto**: Creación de equipos, asignación de miembros y control estratégico.
+  - **Trabajador**: Acceso a proyectos asignados y herramientas de colaboración enfocadas.
+- 🎨 **Interfaz Premium**: Diseño moderno optimizado para la productividad, con transiciones fluidas y una estética profesional.
+- 🔗 **Integración con GitHub**: Vinculación directa de repositorios a equipos para un seguimiento técnico centralizado.
 
 ---
 
@@ -77,11 +77,11 @@ graph TD
 
 El proyecto utiliza un stack moderno y eficiente diseñado para la escalabilidad:
 
-*   **Backend**: PHP 8.2 (Estructura MVC limpia).
-*   **Base de Datos**: MySQL 8.0 con optimización de relaciones.
-*   **Contenedores**: Docker & Docker Compose para un entorno de desarrollo reproducible.
-*   **Servidor**: Apache 2.4 con configuración de rutas amigables (`mod_rewrite`).
-*   **Frontend**: JavaScript Vanilla (ES6+), AJAX para reactividad y CSS3 Moderno con variables personalizadas.
+- **Backend**: PHP 8.2 (Estructura MVC limpia).
+- **Base de Datos**: MySQL 8.0 con optimización de relaciones.
+- **Contenedores**: Docker & Docker Compose para un entorno de desarrollo reproducible.
+- **Servidor**: Apache 2.4 con configuración de rutas amigables (`mod_rewrite`).
+- **Frontend**: JavaScript Vanilla (ES6+), AJAX para reactividad y CSS3 Moderno con variables personalizadas.
 
 ---
 
@@ -111,6 +111,7 @@ TeamHub/
 Sigue estos pasos para desplegar **TeamHub** en tu entorno local:
 
 1.  **Clonar el repositorio**:
+
     ```bash
     git clone https://github.com/JaimeRamirezNavarro/TeamHub.git
     cd TeamHub
@@ -118,20 +119,22 @@ Sigue estos pasos para desplegar **TeamHub** en tu entorno local:
 
 2.  **Configurar el entorno**:
     Copia el archivo de ejemplo y ajusta los parámetros si es necesario:
+
     ```bash
     cp config/db_config.example.php config/db_config.php
     ```
 
 3.  **Iniciar con Docker**:
     Levanta los contenedores (PHP, Apache, MySQL, phpMyAdmin):
+
     ```bash
     docker-compose up -d
     ```
 
 4.  **Acceder a la plataforma**:
-    *   **Aplicación**: [http://localhost:8080](http://localhost:8080)
-    *   **Administración BD**: [http://localhost:8081](http://localhost:8081)
-    *   **Base de Datos Directa**: Puerto `3306` (Usuario: `root`, Pass: `root`)
+    - **Aplicación**: [http://localhost:8080](http://localhost:8080)
+    - **Administración BD**: [http://localhost:8081](http://localhost:8081)
+    - **Base de Datos Directa**: Puerto `3306` (Usuario: `root`, Pass: `root`)
 
 ---
 
@@ -148,5 +151,5 @@ Sigue estos pasos para desplegar **TeamHub** en tu entorno local:
 ---
 
 <p align="center">
-  Desarrollado con precisión por <strong>Jaime Ramírez Navarro</strong> para potenciar la colaboración global.
+  Desarrollado con precisión por <strong>Jaime Ramírez Navarro y equipo</strong> para potenciar la colaboración global.
 </p>
