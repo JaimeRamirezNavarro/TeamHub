@@ -1,90 +1,235 @@
 <?php
 
+require_once __DIR__ . '/../Models/TeamModel.php';
+require_once __DIR__ . '/../Models/UserModel.php';
+require_once __DIR__ . '/../Middleware/Auth.php';
+
 class TeamController
 {
-
     private $teams;
     private $users;
 
     public function __construct()
     {
+        Auth::requireLogin(); // Protección global
         $this->teams = new TeamModel();
         $this->users = new UserModel();
     }
 
     /* ============================
-       EQUIPOS
+       LISTAR SOLO MIS EQUIPOS
     ============================ */
-
-    public function obtenerTodos()
+    public function index()
     {
-        return $this->teams->obtenerTodos();
-    }
+        $user = $_SESSION['user'];
 
-    public function obtener($team_id)
-    {
-        return $this->teams->obtener($team_id);
+        // Equipos donde el usuario participa
+        $equipos = $this->teams->obtenerEquiposPorUsuario(
+            $user['id'],
+            $user['role']
+        );
+
+        $title = "Mis Equipos";
+
+        ob_start();
+        require __DIR__ . '/../Views/pages/teams/index.php';
+        $content = ob_get_clean();
+
+        require __DIR__ . '/../Views/layouts/main.php';
     }
 
     /* ============================
-       MIEMBROS
+       LISTAR TODOS LOS EQUIPOS (ADMIN/MANAGER)
     ============================ */
-
-    public function miembros($team_id)
+    public function all()
     {
-        return $this->teams->obtenerMiembros($team_id);
-    }
+        Auth::requireRole(['admin', 'manager']);
 
-    public function esMiembro($user_id, $team_id)
-    {
-        return $this->teams->esMiembro($user_id, $team_id);
+        $user = $_SESSION['user'];
+
+        // Equipos para el sidebar
+        $sidebarEquipos = $this->teams->obtenerEquiposPorUsuario(
+            $user['id'],
+            $user['role']
+        );
+
+        // Todos los equipos del sistema
+        $equipos = $this->teams->obtenerTodos();
+
+        $title = "Todos los Equipos";
+
+        ob_start();
+        require __DIR__ . '/../Views/pages/teams/all.php';
+        $content = ob_get_clean();
+
+        require __DIR__ . '/../Views/layouts/main.php';
     }
 
     /* ============================
-       ROLES
+       VER EQUIPO
     ============================ */
-
-    public function obtenerRol($user_id, $team_id)
+    public function show($team_id)
     {
+        $user = $_SESSION['user'];
 
-        // Si es admin global
-        $user = $this->users->obtenerUsuario($user_id);
-        if ($user && $user['role'] === 'admin') {
-            return 'admin';
+        // Verificar que el equipo existe
+        $team = $this->teams->obtener($team_id);
+        if (!$team) {
+            http_response_code(404);
+            die("El equipo no existe.");
         }
 
-        // Si es miembro del equipo
-        $miembros = $this->teams->obtenerMiembros($team_id);
-        foreach ($miembros as $m) {
-            if ($m['id'] == $user_id) {
-                return $m['role'];
+        // Admin y managers pueden ver cualquier equipo
+        if (!in_array($user['role'], ['admin', 'manager'])) {
+            if (!$this->teams->esMiembro($user['id'], $team_id)) {
+                die("No tienes permiso para ver este equipo.");
             }
         }
 
-        return null;
+        $miembros = $this->teams->obtenerMiembros($team_id);
+
+        // Equipos para el sidebar
+        $equipos = $this->teams->obtenerEquiposPorUsuario(
+            $user['id'],
+            $user['role']
+        );
+
+        $title = "Equipo: " . $team['name'];
+
+        ob_start();
+        require __DIR__ . '/../Views/pages/teams/show.php';
+        $content = ob_get_clean();
+
+        require __DIR__ . '/../Views/layouts/main.php';
     }
 
     /* ============================
-       ACCIONES
+       CREAR EQUIPO (solo admin/manager)
     ============================ */
-
-    public function unirse($user_id, $team_id)
+    public function create()
     {
-        return $this->teams->unirse($user_id, $team_id);
+        Auth::requireRole(['admin', 'manager']);
+
+        $user = $_SESSION['user'];
+
+        // Equipos para el sidebar
+        $equipos = $this->teams->obtenerEquiposPorUsuario(
+            $user['id'],
+            $user['role']
+        );
+
+        $title = "Crear Equipo";
+
+        ob_start();
+        require __DIR__ . '/../Views/pages/teams/create.php';
+        $content = ob_get_clean();
+
+        require __DIR__ . '/../Views/layouts/main.php';
     }
 
-    public function salir($user_id, $team_id)
+    /* ============================
+       GUARDAR EQUIPO
+    ============================ */
+    public function store()
     {
-        return $this->teams->salir($user_id, $team_id);
+        Auth::requireRole(['admin', 'manager']);
+
+        if (empty($_POST['name'])) {
+            die("El nombre del equipo es obligatorio.");
+        }
+
+        $user = $_SESSION['user'];
+
+        $this->teams->crear([
+            'name' => $_POST['name'],
+            'description' => $_POST['description'] ?? null,
+            'created_by' => $user['id']
+        ]);
+
+        header("Location: " . BASE_PATH . "/teams");
+        exit;
     }
 
-    public function actualizarEstado($team_id, $estado)
+    /* ============================
+       ACTUALIZAR ESTADO
+    ============================ */
+    public function updateStatus()
     {
-        return $this->teams->actualizarEstado($team_id, $estado);
+        Auth::requireRole(['admin', 'manager']);
+
+        $team_id = $_POST['team_id'];
+        $status = $_POST['status'];
+
+        if (!$this->teams->obtener($team_id)) {
+            die("El equipo no existe.");
+        }
+
+        $this->teams->actualizarEstado($team_id, $status);
+
+        header("Location: " . BASE_PATH . "/teams/$team_id");
+        exit;
     }
 
-    public function vincularGitHub($team_id, $repo)
+    /* ============================
+       VINCULAR GITHUB
+    ============================ */
+    public function linkGithub()
     {
-        return $this->teams->vincularGitHub($team_id, $repo);
+        Auth::requireRole(['admin', 'manager']);
+
+        $team_id = $_POST['team_id'];
+        $repo = $_POST['github_repo'];
+
+        if (!$this->teams->obtener($team_id)) {
+            die("El equipo no existe.");
+        }
+
+        $this->teams->vincularGitHub($team_id, $repo);
+
+        header("Location: " . BASE_PATH . "/teams/$team_id");
+        exit;
+    }
+
+    /* ============================
+       UNIRSE A UN EQUIPO
+    ============================ */
+    public function join($team_id)
+    {
+        $user = $_SESSION['user'];
+
+        if (!$this->teams->obtener($team_id)) {
+            die("El equipo no existe.");
+        }
+
+        if ($this->teams->esMiembro($user['id'], $team_id)) {
+            header("Location: " . BASE_PATH . "/teams/$team_id");
+            exit;
+        }
+
+        $this->teams->unirse($user['id'], $team_id);
+
+        header("Location: " . BASE_PATH . "/teams/$team_id");
+        exit;
+    }
+
+    /* ============================
+       SALIR DE UN EQUIPO
+    ============================ */
+    public function leave($team_id)
+    {
+        $user = $_SESSION['user'];
+
+        if (!$this->teams->obtener($team_id)) {
+            die("El equipo no existe.");
+        }
+
+        if (!$this->teams->esMiembro($user['id'], $team_id)) {
+            die("No puedes salir de un equipo al que no perteneces.");
+        }
+
+        $this->teams->salir($user['id'], $team_id);
+
+        header("Location: " . BASE_PATH . "/teams");
+        exit;
     }
 }

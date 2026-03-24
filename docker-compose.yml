@@ -5,15 +5,20 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html
+      - ./apache-public.conf:/etc/apache2/conf-enabled/z-public.conf
     environment:
       APACHE_DOCUMENT_ROOT: /var/www/html/public
     command: >
       bash -c "
-        sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf &&
         a2enmod rewrite &&
-        docker-php-ext-install mysqli pdo_mysql &&
+        docker-php-ext-install pdo pdo_mysql mysqli &&
+        sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf &&
+        sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/apache2.conf &&
         apache2-foreground
       "
+
+
+
 
 
   db:

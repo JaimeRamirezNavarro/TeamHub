@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // -------------------------
     // 1. Cargar ramas
     // -------------------------
-    fetch(`/?api=github&repo=${repo}&action=branches`)
+    fetch(`${window.TeamHub_BaseUrl || ""}/api/github?repo=${repo}&action=branches`)
         .then(r => r.json())
         .then(branches => {
             branchSelector.innerHTML = "";
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `;
 
-        let url = `/?api=github&repo=${repo}&action=${type}`;
+        let url = `${window.TeamHub_BaseUrl || ""}/api/github?repo=${repo}&action=${type}`;
         if (type === "commits" && branch) {
             url += `&branch=${branch}`;
         }

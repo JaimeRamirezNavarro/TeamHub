@@ -1,119 +1,110 @@
-// Theme toggle logic - Execute immediately to prevent flash
-const savedTheme = localStorage.getItem("teamhub-theme");
-const prefersDark =
-  window.matchMedia &&
-  window.matchMedia("(prefers-color-scheme: dark)").matches;
-if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
-  document.documentElement.classList.add("dark-theme");
-  document.body.classList.add("dark-theme");
-}
+try {
+  // GitHub Widget Logic
+  document.addEventListener("DOMContentLoaded", () => {
+    const ghWidget = document.querySelector(".github-widget");
+    if (!ghWidget) return;
 
-// GitHub Widget Logic
-document.addEventListener("DOMContentLoaded", () => {
-  const ghWidget = document.querySelector(".github-widget");
-  if (!ghWidget) return;
+    const repo = ghWidget.dataset.repo;
+    const tabs = document.querySelectorAll(".github-tab");
+    const contentBox = document.getElementById("gh-content-box");
+    const branchSelect = document.getElementById("gh-branch-selector");
+    let loadedBranches = false;
 
-  const repo = ghWidget.dataset.repo;
-  const tabs = document.querySelectorAll(".github-tab");
-  const contentBox = document.getElementById("gh-content-box");
-  const branchSelect = document.getElementById("gh-branch-selector");
-  let loadedBranches = false;
+    // Helper to fetch and populate branches
+    const loadBranchesDropdown = async () => {
+      if (loadedBranches) return;
+      try {
+        const res = await fetch(
+          `${window.TeamHub_BaseUrl || ""}/api/github?action=branches&repo=${repo}`,
+        );
+        if (!res.ok) throw new Error("API Error");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          let html = "";
+          data.forEach((b) => {
+            const isMain = b.name === "main" || b.name === "master";
+            html += `<option value="${b.name}" ${isMain ? "selected" : ""}>${b.name}</option>`;
+          });
+          branchSelect.innerHTML = html;
+          branchSelect.style.display = "inline-block";
+          loadedBranches = true;
 
-  // Helper to fetch and populate branches
-  const loadBranchesDropdown = async () => {
-    if (loadedBranches) return;
-    try {
-      const res = await fetch(
-        `../endpoints/github_proxy.php?action=branches&repo=${repo}`,
-      );
-      if (!res.ok) throw new Error("API Error");
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        let html = "";
-        data.forEach((b) => {
-          const isMain = b.name === "main" || b.name === "master";
-          html += `<option value="${b.name}" ${isMain ? "selected" : ""}>${b.name}</option>`;
-        });
-        branchSelect.innerHTML = html;
-        branchSelect.style.display = "inline-block";
-        loadedBranches = true;
-
-        if (
-          document
-            .querySelector('.github-tab[data-target="commits"]')
-            .classList.contains("active")
-        ) {
-          loadGitHubData("commits", branchSelect.value);
+          if (
+            document
+              .querySelector('.github-tab[data-target="commits"]')
+              .classList.contains("active")
+          ) {
+            loadGitHubData("commits", branchSelect.value);
+          }
+        } else {
+          branchSelect.style.display = "none";
         }
-      } else {
+      } catch (e) {
         branchSelect.style.display = "none";
       }
-    } catch (e) {
-      branchSelect.style.display = "none";
-    }
-  };
+    };
 
-  const loadGitHubData = async (action, branch = null) => {
-    contentBox.innerHTML =
-      '<div class="gh-loader"><div class="spinner"></div><br>Cargando...</div>';
-    try {
-      let url = `../endpoints/github_proxy.php?action=${action}&repo=${repo}`;
-      if (action === "commits" && branch) {
-        url += `&branch=${encodeURIComponent(branch)}`;
-      }
+    const loadGitHubData = async (action, branch = null) => {
+      contentBox.innerHTML =
+        '<div class="gh-loader"><div class="spinner"></div><br>Cargando...</div>';
+      try {
+        let url = `${window.TeamHub_BaseUrl || ""}/api/github?action=${action}&repo=${repo}`;
+        if (action === "commits" && branch) {
+          url += `&branch=${encodeURIComponent(branch)}`;
+        }
 
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("API Error");
-      const data = await res.json();
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("API Error");
+        const data = await res.json();
 
-      if (!Array.isArray(data) || data.length === 0) {
-        contentBox.innerHTML =
-          '<div class="empty-state"><span>No hay elementos recientes</span></div>';
-        return;
-      }
+        if (!Array.isArray(data) || data.length === 0) {
+          contentBox.innerHTML =
+            '<div class="empty-state"><span>No hay elementos recientes</span></div>';
+          return;
+        }
 
-      let html = "";
-      data.forEach((item) => {
-        if (action === "commits") {
-          const msg = item.commit.message.split("\n")[0];
-          const author = item.commit.author.name;
-          const date = new Date(item.commit.author.date).toLocaleDateString(
-            undefined,
-            { month: "short", day: "numeric" },
-          );
-          html += `
+        let html = "";
+        data.forEach((item) => {
+          if (action === "commits") {
+            const msg = item.commit.message.split("\n")[0];
+            const author = item.commit.author.name;
+            const date = new Date(item.commit.author.date).toLocaleDateString(
+              undefined,
+              { month: "short", day: "numeric" },
+            );
+            html += `
                         <div class="gh-item">
                             <a href="${item.html_url}" target="_blank" class="gh-title">${msg}</a>
                             <div class="gh-meta">Commit por <span style="font-weight:500;color:var(--text-secondary)">${author}</span> el ${date}</div>
                         </div>`;
-        } else if (action === "pulls") {
-          const title = item.title;
-          const user = item.user.login;
-          const stateBadge =
-            item.state === "open"
-              ? '<span class="gh-badge open">Abierto</span>'
-              : '<span class="gh-badge merged">Fusionado</span>';
-          html += `
+          } else if (action === "pulls") {
+            const title = item.title;
+            const user = item.user.login;
+            const stateBadge =
+              item.state === "open"
+                ? '<span class="gh-badge open">Abierto</span>'
+                : '<span class="gh-badge merged">Fusionado</span>';
+            html += `
                         <div class="gh-item">
                             <a href="${item.html_url}" target="_blank" class="gh-title">${title}</a>
                             <div class="gh-meta">${stateBadge} #${item.number} por ${user}</div>
                         </div>`;
-        } else if (action === "issues") {
-          if (item.pull_request) return;
-          const title = item.title;
-          const user = item.user.login;
-          const stateBadge =
-            item.state === "open"
-              ? '<span class="gh-badge open">Abierto</span>'
-              : '<span class="gh-badge closed">Cerrado</span>';
-          html += `
+          } else if (action === "issues") {
+            if (item.pull_request) return;
+            const title = item.title;
+            const user = item.user.login;
+            const stateBadge =
+              item.state === "open"
+                ? '<span class="gh-badge open">Abierto</span>'
+                : '<span class="gh-badge closed">Cerrado</span>';
+            html += `
                         <div class="gh-item">
                             <a href="${item.html_url}" target="_blank" class="gh-title">${title}</a>
                             <div class="gh-meta">${stateBadge} #${item.number} por ${user}</div>
                         </div>`;
-        } else if (action === "branches") {
-          const name = item.name;
-          html += `
+          } else if (action === "branches") {
+            const name = item.name;
+            html += `
                         <div class="gh-item" style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
                                 <div class="gh-title" style="margin-bottom:0;">
@@ -122,104 +113,104 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                             </div>
                         </div>`;
+          }
+        });
+        contentBox.innerHTML = html;
+      } catch (err) {
+        contentBox.innerHTML =
+          '<div class="gh-loader" style="color:#ff5252;">Error o Repositorio no encontrado (o privado).</div>';
+      }
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        if (e.target.tagName === "SELECT" || e.target.tagName === "OPTION")
+          return;
+
+        tabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        const target = tab.dataset.target;
+        if (
+          target === "commits" &&
+          branchSelect &&
+          branchSelect.style.display !== "none"
+        ) {
+          loadGitHubData(target, branchSelect.value);
+        } else {
+          loadGitHubData(target);
         }
       });
-      contentBox.innerHTML = html;
-    } catch (err) {
-      contentBox.innerHTML =
-        '<div class="gh-loader" style="color:#ff5252;">Error o Repositorio no encontrado (o privado).</div>';
-    }
-  };
-
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", (e) => {
-      if (e.target.tagName === "SELECT" || e.target.tagName === "OPTION")
-        return;
-
-      tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-
-      const target = tab.dataset.target;
-      if (
-        target === "commits" &&
-        branchSelect &&
-        branchSelect.style.display !== "none"
-      ) {
-        loadGitHubData(target, branchSelect.value);
-      } else {
-        loadGitHubData(target);
-      }
     });
+
+    if (branchSelect) {
+      branchSelect.addEventListener("change", () => {
+        loadGitHubData("commits", branchSelect.value);
+      });
+    }
+
+    loadGitHubData("commits");
+    loadBranchesDropdown();
   });
 
-  if (branchSelect) {
-    branchSelect.addEventListener("change", () => {
-      loadGitHubData("commits", branchSelect.value);
-    });
-  }
+  // Roadmap Logic
+  let roadmapIsUnloading = false;
+  window.addEventListener("beforeunload", () => {
+    roadmapIsUnloading = true;
+  });
 
-  loadGitHubData("commits");
-  loadBranchesDropdown();
-});
+  document.addEventListener("DOMContentLoaded", async () => {
+    const roadmapWidget = document.getElementById("roadmap-widget");
+    if (!roadmapWidget) return;
 
-// Roadmap Logic
-let roadmapIsUnloading = false;
-window.addEventListener("beforeunload", () => {
-  roadmapIsUnloading = true;
-});
+    const teamId = roadmapWidget.dataset.teamId;
+    if (!teamId) return;
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const roadmapWidget = document.getElementById("roadmap-widget");
-  if (!roadmapWidget) return;
+    const contentBox = document.getElementById("roadmap-content");
+    const refreshBtn = document.getElementById("btn-refresh-roadmap");
 
-  const teamId = roadmapWidget.dataset.teamId;
-  if (!teamId) return;
-
-  const contentBox = document.getElementById("roadmap-content");
-  const refreshBtn = document.getElementById("btn-refresh-roadmap");
-
-  const fetchRoadmap = async (forceRefresh = false) => {
-    contentBox.innerHTML = `
+    const fetchRoadmap = async (forceRefresh = false) => {
+      contentBox.innerHTML = `
             <div class="gh-loader" style="padding: 40px 0;">
                 <div class="spinner" style="border-top-color:#8b5cf6; width:40px; height:40px; border-width:4px;"></div>
                 <br><span style="background: linear-gradient(90deg, #8b5cf6, #3b82f6); -webkit-background-clip: text; color: transparent; font-weight:600; font-size:1.1rem; display:inline-block; margin-top:16px;">Se esta generando la hoja de ruta</span>
             </div>
         `;
-    if (refreshBtn) refreshBtn.disabled = true;
+      if (refreshBtn) refreshBtn.disabled = true;
 
-    try {
-      const endpoint = forceRefresh
-        ? `/?api=roadmap&team_id=${teamId}&force_refresh=true`
-        : `/?api=roadmap&team_id=${teamId}`;
+      try {
+        const endpoint = forceRefresh
+          ? `${window.TeamHub_BaseUrl || ""}/api/roadmap?team_id=${teamId}&force_refresh=true`
+          : `${window.TeamHub_BaseUrl || ""}/api/roadmap?team_id=${teamId}`;
 
-      const res = await fetch(endpoint);
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errText}`);
-      }
-
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-
-      const roadmap = data.roadmap;
-      let html = '<div class="roadmap-container">';
-      let hasActivePhase = false;
-
-      Object.keys(roadmap).forEach((key, index) => {
-        const phase = roadmap[key];
-        let statusClass = "";
-
-        if (phase.completado) {
-          statusClass = "completed";
-        } else if (!hasActivePhase && phase.avance > 0) {
-          statusClass = "active";
-          hasActivePhase = true;
-        } else if (!hasActivePhase && phase.avance === 0) {
-          statusClass = "active";
-          hasActivePhase = true;
+        const res = await fetch(endpoint);
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
         }
 
-        html += `
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const roadmap = data.roadmap;
+        let html = '<div class="roadmap-container">';
+        let hasActivePhase = false;
+
+        Object.keys(roadmap).forEach((key, index) => {
+          const phase = roadmap[key];
+          let statusClass = "";
+
+          if (phase.completado) {
+            statusClass = "completed";
+          } else if (!hasActivePhase && phase.avance > 0) {
+            statusClass = "active";
+            hasActivePhase = true;
+          } else if (!hasActivePhase && phase.avance === 0) {
+            statusClass = "active";
+            hasActivePhase = true;
+          }
+
+          html += `
                     <div class="roadmap-phase ${statusClass}">
                         <div class="phase-dot">${phase.completado ? "✓" : index + 1}</div>
                         <div class="phase-content">
@@ -234,63 +225,37 @@ document.addEventListener("DOMContentLoaded", async () => {
                         </div>
                     </div>
                 `;
-      });
+        });
 
-      html += "</div>";
+        html += "</div>";
 
-      if (data.github) {
-        html += `
+        if (data.github) {
+          html += `
                 <div style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border-color); display:flex; gap:16px; font-size:0.8rem;">
                     <div style="color:var(--text-secondary)"><strong style="color:var(--text-primary)">${data.github.commits}</strong> Commits Recientes</div>
                     <div style="color:var(--text-secondary)"><strong style="color:var(--text-primary)">${data.github.prs_closed}</strong> PRs Cerrados</div>
                     ${data.github.active ? '<div style="color:var(--success-color); font-weight:600;">Proyecto Activo</div>' : ""}
                 </div>`;
+        }
+
+        contentBox.innerHTML = html;
+        if (refreshBtn) refreshBtn.disabled = false;
+      } catch (err) {
+        if (!roadmapIsUnloading) {
+          contentBox.innerHTML = `<div class="empty-state">No se pudo cargar la hoja de ruta.<br><small style="color:red; font-size:0.8rem; margin-top:8px; display:inline-block;">${err.message}</small></div>`;
+        }
+        if (refreshBtn) refreshBtn.disabled = false;
       }
+    };
 
-      contentBox.innerHTML = html;
-      if (refreshBtn) refreshBtn.disabled = false;
-    } catch (err) {
-      if (!roadmapIsUnloading) {
-        contentBox.innerHTML = `<div class="empty-state">No se pudo cargar la hoja de ruta.<br><small style="color:red; font-size:0.8rem; margin-top:8px; display:inline-block;">${err.message}</small></div>`;
-      }
-      if (refreshBtn) refreshBtn.disabled = false;
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => {
+        fetchRoadmap(true);
+      });
     }
-  };
 
-  if (refreshBtn) {
-    refreshBtn.addEventListener("click", () => {
-      fetchRoadmap(true);
-    });
-  }
-
-  fetchRoadmap(false);
-});
-
-// Theme Toggle Functionality
-document.addEventListener("DOMContentLoaded", () => {
-  const themeBtn = document.getElementById("theme-toggle");
-  const iconLight = document.getElementById("theme-icon-light");
-  const iconDark = document.getElementById("theme-icon-dark");
-
-  function updateIcon() {
-    if (document.body.classList.contains("dark-theme")) {
-      iconLight.style.display = "block";
-      iconDark.style.display = "none";
-    } else {
-      iconLight.style.display = "none";
-      iconDark.style.display = "block";
-    }
-  }
-
-  updateIcon();
-
-  themeBtn.addEventListener("click", () => {
-    document.body.classList.toggle("dark-theme");
-    document.documentElement.classList.toggle("dark-theme");
-
-    const isDark = document.body.classList.contains("dark-theme");
-    localStorage.setItem("teamhub-theme", isDark ? "dark" : "light");
-
-    updateIcon();
+    fetchRoadmap(false);
   });
-});
+} catch (err) {
+  console.error("Error en dashboard.js:", err);
+}

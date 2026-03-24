@@ -1,4 +1,7 @@
 <?php
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']));
+}
 
 spl_autoload_register(function ($class) {
 

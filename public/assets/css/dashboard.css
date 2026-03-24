@@ -119,10 +119,11 @@ body {
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: 16px 20px;
   box-shadow: var(--shadow-sm);
   z-index: 10;
-  overflow-y: auto;
+  height: 100vh;
+  overflow: hidden; /* IMPORTANTE */
 }
 
 .brand {
@@ -238,6 +239,18 @@ body {
   background-color: #eff6ff;
   color: var(--accent-color);
   font-weight: 600;
+}
+
+.admin-links a {
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 6px 4px;
+  display: block;
+}
+
+.admin-links a:hover {
+  background: var(--hover-bg);
+  border-radius: 4px;
 }
 
 .logout-btn {
@@ -476,26 +489,25 @@ body {
 /* --- Logout Button --- */
 
 .logout-container {
-    margin-top: auto; /* Empuja el botón hacia abajo pero con espacio */
-    padding: 20px;
+  margin-top: auto; /* Empuja el botón hacia abajo pero con espacio */
+  padding: 20px;
 }
 
 .logout-btn {
-    width: 100%;
-    padding: 10px 14px;
-    background: var(--danger-bg, #ff4d4d20);
-    color: var(--danger-text, #ff4d4d);
-    border: 1px solid var(--danger-border, #ff4d4d50);
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s ease;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--danger-bg, #ff4d4d20);
+  color: var(--danger-text, #ff4d4d);
+  border: 1px solid var(--danger-border, #ff4d4d50);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
 
 .logout-btn:hover {
-    background: var(--danger-bg-hover, #ff4d4d30);
+  background: var(--danger-bg-hover, #ff4d4d30);
 }
-
 
 /* Form Elements */
 .form-group {
@@ -750,7 +762,6 @@ body.dark-theme .roadmap-phase.active .phase-dot {
 .roadmap-phase.active .phase-progress-fill {
   background: var(--accent-color);
 }
-
 
 /* Online Users Widget */
 .online-widget {

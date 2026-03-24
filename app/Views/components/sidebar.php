@@ -1,14 +1,19 @@
+<?php
+// Necesario para usar Auth::hasRole() en la vista
+require_once __DIR__ . '/../../Middleware/Auth.php';
+?>
+
 <div class="sidebar">
 
     <!-- Brand + Theme Toggle -->
     <div class="brand">
         <a href="/" class="brand-logo">TeamHub</a>
-        <button id="theme-toggle" class="btn" 
-            style="margin-left:auto; padding:6px; background:transparent; border:1px solid var(--border-color); color:var(--text-secondary);" 
+        <button id="theme-toggle" class="btn"
+            style="margin-left:auto; padding:6px; background:transparent; border:1px solid var(--border-color); color:var(--text-secondary);"
             title="Cambiar Tema">
-            
+
             <!-- Iconos (JS decide cuál mostrar) -->
-            <svg id="theme-icon-light" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+            <svg id="theme-icon-light" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="5"></circle>
                 <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -21,7 +26,7 @@
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
 
-            <svg id="theme-icon-dark" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+            <svg id="theme-icon-dark" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
@@ -29,24 +34,23 @@
     </div>
 
     <!-- User Profile -->
-<div class="user-profile">
+    <div class="user-profile">
 
-    <div class="user-avatar">
-        <?= strtoupper(substr($usuario['username'] ?? 'U', 0, 1)) ?>
-    </div>
-
-    <div style="flex:1;">
-        <div style="font-weight:600">
-            <?= htmlspecialchars($usuario['username'] ?? 'Invitado') ?>
+        <div class="user-avatar">
+            <?= strtoupper(substr($usuario['username'] ?? 'U', 0, 1)) ?>
         </div>
+
+        <div style="flex:1;">
+            <div style="font-weight:600">
+                <?= htmlspecialchars($usuario['username'] ?? 'Invitado') ?>
+            </div>
+        </div>
+
     </div>
-
-</div>
-
 
     <!-- Online Users Widget (Gather) -->
     <div id="gather-presence-widget-container" style="margin-bottom: 20px;">
-        <?php include __DIR__ . '/online_users.php'; ?> 
+        <?php include __DIR__ . '/online_users.php'; ?>
     </div>
 
     <!-- Project List -->
@@ -55,20 +59,32 @@
     <ul class="project-list">
         <?php foreach ($equipos as $equipo): ?>
             <li class="project-item">
-                <a href="?team_id=<?= $equipo['id'] ?>" 
-                   class="project-link <?= $selected_team_id == $equipo['id'] ? 'active' : '' ?>">
+                <a href="?team_id=<?= $equipo['id'] ?>"
+                    class="project-link <?= $selected_team_id == $equipo['id'] ? 'active' : '' ?>">
                     <?= htmlspecialchars($equipo['name']) ?>
                 </a>
             </li>
         <?php endforeach; ?>
     </ul>
 
-    <!-- Logout -->
-    <div class="logout-container">
-    <form method="POST" action="/?action=logout">
-        <button type="submit" name="logout" class="logout-btn">Cerrar sesión</button>
-    </form>
-</div>
+    <!-- Administración (fija, sin scroll) -->
+    <?php if (Auth::hasRole(['admin', 'manager'])): ?>
+        <div class="sidebar-section-title" style="margin-top:20px;">Herramientas</div>
 
+        <a href="/admin" class="project-link" style="display:block; padding:6px 0;">
+            Administrar
+        </a>
+    <?php endif; ?>
+
+
+
+    <!-- Logout (más abajo del todo) -->
+    <div style="margin-top:auto; padding-top:20px;">
+        <div class="logout-container">
+            <form method="POST" action="/logout">
+                <button type="submit" name="logout" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
 
 </div>

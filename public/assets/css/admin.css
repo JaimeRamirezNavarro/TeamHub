@@ -1,0 +1,169 @@
+/* ================================
+   ANIMACIÓN GLOBAL
+================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================================
+   CONTENEDOR GENERAL
+================================ */
+.admin-container {
+  padding: 25px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ================================
+   TITULOS
+================================ */
+.admin-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.admin-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+/* ================================
+   GRID DE TARJETAS
+================================ */
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* ================================
+   TARJETAS (USUARIOS / EQUIPOS)
+================================ */
+.admin-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.admin-card:hover {
+  background: var(--hover-bg);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Icono dentro de la tarjeta */
+.admin-icon {
+  font-size: 36px;
+  width: 50px;
+  height: 50px;
+  background: var(--hover-bg);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Texto dentro de la tarjeta */
+.admin-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.admin-card-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Estado dentro de la tarjeta */
+.team-status,
+.user-status {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ================================
+   BOTÓN PRINCIPAL
+================================ */
+.btn-primary {
+  background: var(--accent-color, #4a8cff);
+  color: white;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover, #3a78e0);
+}
+
+/* ================================
+   TARJETA VACÍA (SIN ELEMENTOS)
+================================ */
+.form-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 25px;
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ================================
+   FORMULARIOS (CREATE / EDIT)
+================================ */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea {
+  background: var(--input-bg, #1e1e1e);
+  border: 1px solid var(--border-color);
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 15px;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--accent-color, #4a8cff);
+  outline: none;
+}

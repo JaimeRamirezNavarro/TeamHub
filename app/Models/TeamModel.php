@@ -1,41 +1,80 @@
 <?php
 require_once __DIR__ . '/../Database/Database.php';
 
-class TeamModel {
-    private $db;
+class TeamModel
+{
+    public $db;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /* ============================
-       MÉTODOS EXISTENTES (TUS ORIGINALES)
-       ============================ */
+    /* ============================================================
+       OBTENER EQUIPOS SEGÚN ROL
+       ============================================================ */
+    public function obtenerEquiposPorUsuario($user_id, $role)
+    {
+        // Admin o manager ven todos los equipos
+        if ($role === 'admin' || $role === 'manager') {
+            return $this->obtenerTodos();
+        }
 
-    public function obtenerTodos() {
-        return $this->db->query("SELECT * FROM teams")->fetchAll();
+        // Usuarios normales solo ven los equipos donde están asignados
+        $stmt = $this->db->prepare("
+            SELECT t.*
+            FROM teams t
+            INNER JOIN team_members tm ON tm.team_id = t.id
+            WHERE tm.user_id = ?
+        ");
+        $stmt->execute([$user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function obtener($id) {
+    /* ============================================================
+       OBTENER TODOS LOS EQUIPOS
+       ============================================================ */
+    public function obtenerTodos()
+    {
+        return $this->db->query("SELECT * FROM teams")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /* ============================================================
+       OBTENER UN EQUIPO
+       ============================================================ */
+    public function obtener($id)
+    {
         $stmt = $this->db->prepare("SELECT * FROM teams WHERE id = ?");
         $stmt->execute([$id]);
-        return $stmt->fetch();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function actualizarEstado($team_id, $status) {
-        $valid = ['En Progreso','Completado','Pausado','Cancelado'];
+    /* ============================================================
+       ACTUALIZAR ESTADO DEL EQUIPO
+       ============================================================ */
+    public function actualizarEstado($team_id, $status)
+    {
+        $valid = ['En Progreso', 'Completado', 'Pausado', 'Cancelado'];
         if (!in_array($status, $valid)) return false;
 
         $stmt = $this->db->prepare("UPDATE teams SET status = ? WHERE id = ?");
         return $stmt->execute([$status, $team_id]);
     }
 
-    public function vincularGitHub($team_id, $repo) {
+    /* ============================================================
+       VINCULAR REPOSITORIO GITHUB
+       ============================================================ */
+    public function vincularGitHub($team_id, $repo)
+    {
         $stmt = $this->db->prepare("UPDATE teams SET github_repo = ? WHERE id = ?");
         return $stmt->execute([$repo, $team_id]);
     }
 
-    public function obtenerMiembros($team_id) {
+    /* ============================================================
+       OBTENER MIEMBROS DEL EQUIPO
+       ============================================================ */
+    public function obtenerMiembros($team_id)
+    {
         $stmt = $this->db->prepare("
             SELECT u.id, u.username, u.status, u.last_activity, tm.role
             FROM users u
@@ -43,10 +82,31 @@ class TeamModel {
             WHERE tm.team_id = ?
         ");
         $stmt->execute([$team_id]);
-        return $stmt->fetchAll();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function esMiembro($user_id, $team_id) {
+    /* ============================================================
+       OBTENER ROL DEL USUARIO EN EL EQUIPO
+       ============================================================ */
+    public function obtenerRol($user_id, $team_id)
+    {
+        $stmt = $this->db->prepare("
+            SELECT role 
+            FROM team_members 
+            WHERE user_id = ? AND team_id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$user_id, $team_id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result['role'] ?? null;
+    }
+
+    /* ============================================================
+       COMPROBAR SI ES MIEMBRO
+       ============================================================ */
+    public function esMiembro($user_id, $team_id)
+    {
         $stmt = $this->db->prepare("
             SELECT 1 FROM team_members 
             WHERE user_id = ? AND team_id = ?
@@ -55,7 +115,11 @@ class TeamModel {
         return (bool) $stmt->fetch();
     }
 
-    public function unirse($user_id, $team_id) {
+    /* ============================================================
+       UNIRSE A UN EQUIPO
+       ============================================================ */
+    public function unirse($user_id, $team_id)
+    {
         if ($this->esMiembro($user_id, $team_id)) return false;
 
         $stmt = $this->db->prepare("
@@ -65,7 +129,11 @@ class TeamModel {
         return $stmt->execute([$user_id, $team_id]);
     }
 
-    public function salir($user_id, $team_id) {
+    /* ============================================================
+       SALIR DE UN EQUIPO
+       ============================================================ */
+    public function salir($user_id, $team_id)
+    {
         $stmt = $this->db->prepare("
             DELETE FROM team_members 
             WHERE user_id = ? AND team_id = ?
@@ -73,17 +141,16 @@ class TeamModel {
         return $stmt->execute([$user_id, $team_id]);
     }
 
-    /* ============================
-       NUEVOS MÉTODOS PARA ROADMAP
-       ============================ */
-
-    // Alias limpio para obtener equipo (compatibilidad con RoadmapService)
-    public function getTeam($id) {
+    /* ============================================================
+       ROADMAP IA
+       ============================================================ */
+    public function getTeam($id)
+    {
         return $this->obtener($id);
     }
 
-    // Guardar roadmap generado por IA
-    public function saveRoadmap($team_id, $roadmap) {
+    public function saveRoadmap($team_id, $roadmap)
+    {
         $stmt = $this->db->prepare("
             UPDATE teams SET ai_roadmap = ? WHERE id = ?
         ");
@@ -91,5 +158,33 @@ class TeamModel {
             json_encode($roadmap, JSON_UNESCAPED_UNICODE),
             $team_id
         ]);
+    }
+
+    /* ============================================================
+       CREAR EQUIPO + AÑADIR CREADOR COMO ADMIN
+       ============================================================ */
+    public function crear($data)
+    {
+        // Crear equipo
+        $stmt = $this->db->prepare("
+            INSERT INTO teams (name, description, status, created_by)
+            VALUES (?, ?, 'En Progreso', ?)
+        ");
+        $stmt->execute([
+            $data['name'],
+            $data['description'] ?? null,
+            $data['created_by']
+        ]);
+
+        $teamId = $this->db->lastInsertId();
+
+        // Añadir al creador como admin del equipo
+        $stmt = $this->db->prepare("
+            INSERT INTO team_members (user_id, team_id, role)
+            VALUES (?, ?, 'admin')
+        ");
+        $stmt->execute([$data['created_by'], $teamId]);
+
+        return $teamId;
     }
 }

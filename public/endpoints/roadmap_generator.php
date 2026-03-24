@@ -7,7 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../app/Services/RoadmapService.php';
+require_once __DIR__ . '/../../app/Services/RoadmapService.php';
+
 
 try {
 
@@ -35,7 +36,6 @@ try {
     // Limpiar cualquier salida previa
     ob_clean();
     echo json_encode($result, JSON_UNESCAPED_UNICODE);
-
 } catch (Exception $e) {
 
     ob_clean();

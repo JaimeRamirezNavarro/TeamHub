@@ -3,7 +3,7 @@
  * Sends a pulse to the server every minute to update last_activity
  */
 function sendHeartbeat() {
-    fetch('/?api=heartbeat')
+    fetch(`${window.TeamHub_BaseUrl || ""}/api/heartbeat`)
         .then(response => {
             if (!response.ok) console.warn('Heartbeat failed');
         })

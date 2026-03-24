@@ -10,7 +10,9 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `remember_token` varchar(255) DEFAULT NULL,
   `remember_token_expiry` datetime DEFAULT NULL,
-  `role` enum('admin','user') DEFAULT 'user',
+
+  `role` enum('admin','manager','user') DEFAULT 'user',
+
   `status` enum('Oficina','Teletrabajo','Ausente','Reunión','Desconectado') DEFAULT 'Oficina',
   `last_activity` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -21,7 +23,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` VALUES
 (1,'Admin','admin@teamhub.com','$2y$10$d4X38C6SFfbLIRfdqp6xyel7WiEYYG0IwYp.PnxPAvVAtJFf4zRMS',NULL,NULL,'admin','Oficina','2026-02-16 09:13:50','2026-02-12 20:25:26'),
-(2,'Sergio','sergio@teamhub.com','$2y$10$d4X38C6SFfbLIRfdqp6xyel7WiEYYG0IwYp.PnxPAvVAtJFf4zRMS',NULL,NULL,'user','Oficina','2026-02-16 09:13:50','2026-02-12 20:25:26'),
+(2,'Sergio','sergio@teamhub.com','$2y$10$d4X38C6SFfbLIRfdqp6xyel7WiEYYG0IwYp.PnxPAvVAtJFf4zRMS',NULL,NULL,'manager','Oficina','2026-02-16 09:13:50','2026-02-12 20:25:26'),
 (3,'David','david@teamhub.com','$2y$10$d4X38C6SFfbLIRfdqp6xyel7WiEYYG0IwYp.PnxPAvVAtJFf4zRMS',NULL,NULL,'user','Teletrabajo','2026-02-16 09:13:50','2026-02-12 20:25:26'),
 (4,'Laura','laura@teamhub.com','$2y$10$d4X38C6SFfbLIRfdqp6xyel7WiEYYG0IwYp.PnxPAvVAtJFf4zRMS',NULL,NULL,'user','Oficina','2026-02-16 09:13:50','2026-02-12 20:25:26'),
 (5,'Elena','elena@teamhub.com','$2y$10$d4X38C6SFfbLIRfdqp6xyel7WiEYYG0IwYp.PnxPAvVAtJFf4zRMS',NULL,NULL,'user','Reunión','2026-02-16 09:13:50','2026-02-12 20:25:26'),
@@ -36,6 +38,7 @@ CREATE TABLE `teams` (
   `gather_space_url` varchar(500) DEFAULT NULL,
   `gather_enabled` tinyint(1) DEFAULT '0',
   `github_repo` varchar(255) DEFAULT NULL,
+  `ai_roadmap` LONGTEXT DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -44,14 +47,14 @@ CREATE TABLE `teams` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `teams`
-(id, name, description, status, gather_space_id, gather_space_url, gather_enabled, github_repo, created_by, created_at)
+(id, name, description, status, gather_space_id, gather_space_url, gather_enabled, github_repo, ai_roadmap, created_by, created_at)
 VALUES
-(1,'Proyecto Alpha','Desarrollo de API REST para integración con sistemas externos','En Progreso',NULL,NULL,0,NULL,1,'2026-02-12 20:25:26'),
-(2,'Marketing Q1','Campaña publicitaria digital para el primer trimestre','En Progreso',NULL,NULL,0,NULL,1,'2026-02-12 20:25:26'),
-(3,'Infraestructura Cloud','Migración a arquitectura cloud y optimización de servidores','En Progreso',NULL,NULL,0,NULL,1,'2026-02-12 20:25:26'),
-(4,'Diseño UI/UX','Renovación completa de la identidad visual de la marca','Pausado',NULL,NULL,0,NULL,1,'2026-02-12 20:25:26'),
-(5,'Infraestructura','Mantenimiento y actualización de servidores y redes.','En Progreso','MwUYFMPvLQtJtS9P\\pruebas','https://app.gather.town/app/MwUYFMPvLQtJtS9P/pruebas',1,NULL,1,'2026-02-16 10:10:44'),
-(6,'Recursos Humanos','Gestión de nuevas contrataciones y bienestar laboral.','En Progreso','MwUYFMPvLQtJtS9P\\pruebas','https://app.gather.town/app/MwUYFMPvLQtJtS9P/pruebas',1,NULL,1,'2026-02-16 10:10:44');
+(1,'Proyecto Alpha','Desarrollo de API REST para integración con sistemas externos','En Progreso',NULL,NULL,0,NULL,NULL,1,'2026-02-12 20:25:26'),
+(2,'Marketing Q1','Campaña publicitaria digital para el primer trimestre','En Progreso',NULL,NULL,0,NULL,NULL,1,'2026-02-12 20:25:26'),
+(3,'Infraestructura Cloud','Migración a arquitectura cloud y optimización de servidores','En Progreso',NULL,NULL,0,NULL,NULL,1,'2026-02-12 20:25:26'),
+(4,'Diseño UI/UX','Renovación completa de la identidad visual de la marca','Pausado',NULL,NULL,0,NULL,NULL,1,'2026-02-12 20:25:26'),
+(5,'Infraestructura','Mantenimiento y actualización de servidores y redes.','En Progreso','MwUYFMPvLQtJtS9P\\pruebas','https://app.gather.town/app/MwUYFMPvLQtJtS9P/pruebas',1,NULL,NULL,1,'2026-02-16 10:10:44'),
+(6,'Recursos Humanos','Gestión de nuevas contrataciones y bienestar laboral.','En Progreso','MwUYFMPvLQtJtS9P\\pruebas','https://app.gather.town/app/MwUYFMPvLQtJtS9P/pruebas',1,NULL,NULL,1,'2026-02-16 10:10:44');
 
 CREATE TABLE `team_members` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -67,7 +70,7 @@ CREATE TABLE `team_members` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `team_members` VALUES
-(1,2,1,'admin','2026-02-12 20:25:26'),
+(1,1,1,'admin','2026-02-12 20:25:26'),
 (2,3,1,'member','2026-02-12 20:25:26'),
 (3,4,1,'member','2026-02-12 20:25:26'),
 (4,3,2,'admin','2026-02-12 20:25:26'),
