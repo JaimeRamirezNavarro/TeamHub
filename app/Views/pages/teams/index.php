@@ -8,7 +8,7 @@
 
         <?php if (in_array($_SESSION['user']['role'], ['admin', 'manager'])): ?>
             <a href="<?= BASE_PATH ?>/teams/create" class="btn-primary" style="text-decoration:none;">
-                Crear Proyecto
+                Crear Equipo
             </a>
         <?php endif; ?>
     </div>

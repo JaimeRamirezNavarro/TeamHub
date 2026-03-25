@@ -15,21 +15,28 @@ class TeamModel
        ============================================================ */
     public function obtenerEquiposPorUsuario($user_id, $role)
     {
-        // Admin o manager ven todos los equipos
+        // Admin o manager: solo los equipos que ellos crearon
         if ($role === 'admin' || $role === 'manager') {
-            return $this->obtenerTodos();
+            $stmt = $this->db->prepare("
+            SELECT *
+            FROM teams
+            WHERE created_by = ?
+        ");
+            $stmt->execute([$user_id]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        // Usuarios normales solo ven los equipos donde están asignados
+        // Usuarios normales: equipos donde participan
         $stmt = $this->db->prepare("
-            SELECT t.*
-            FROM teams t
-            INNER JOIN team_members tm ON tm.team_id = t.id
-            WHERE tm.user_id = ?
-        ");
+        SELECT t.*
+        FROM teams t
+        INNER JOIN team_members tm ON tm.team_id = t.id
+        WHERE tm.user_id = ?
+    ");
         $stmt->execute([$user_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
 
     /* ============================================================
        OBTENER TODOS LOS EQUIPOS
