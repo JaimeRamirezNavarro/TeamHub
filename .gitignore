@@ -1,0 +1,23 @@
+# Logs
+htdocs/logs/
+*.log
+
+# Dependencies
+node_modules/
+htdocs/vendor/
+
+# Build outputs
+dist/
+build/
+bin/
+obj/
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Large binaries in executable folder
+ejecutable/TeamHubWinClient/node_modules/
+ejecutable/TeamHubWinClient/dist/

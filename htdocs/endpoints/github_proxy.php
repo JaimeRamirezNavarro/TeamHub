@@ -4,7 +4,7 @@ session_start();
 header('Content-Type: application/json');
 
 // Check authentication
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user']['id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'No autorizado']);
     exit;

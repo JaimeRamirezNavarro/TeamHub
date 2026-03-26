@@ -1,0 +1,41 @@
+<!-- Widget Reducido: Botón a Usuarios Online -->
+<div id="gather-widget-simple" style="margin: 24px 0;">
+    <a href="/?page=online_users" class="online-widget">
+
+        <div class="online-widget-header">
+            <div class="online-widget-title">Online</div>
+            <div id="widget-online-count" class="online-widget-count">0</div>
+        </div>
+
+        <div class="online-widget-footer">
+            <span id="widget-status-dot"
+                  style="width: 8px; height: 8px; background: var(--text-muted); border-radius: 50%;">
+            </span>
+
+            <span id="widget-status-text">Cargando...</span>
+        </div>
+
+    </a>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/?api=online_users')
+        .then(res => res.json())
+        .then(data => {
+            const count = document.getElementById('widget-online-count');
+            const text = document.getElementById('widget-status-text');
+            const dot = document.getElementById('widget-status-dot');
+
+            if (data.success) {
+                count.textContent = data.online_count || 0;
+                text.textContent = 'Ver detalles';
+                dot.style.background = 'var(--success-color)';
+            } else {
+                text.textContent = 'Sin conexión';
+                dot.style.background = 'var(--danger-color)';
+            }
+        })
+        .catch(e => console.error(e));
+});
+</script>
