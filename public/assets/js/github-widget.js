@@ -1,111 +1,120 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const widget = document.querySelector(".github-widget");
-    if (!widget) return;
+  const widget = document.querySelector(".github-widget");
+  if (!widget) return;
 
-    const repo = widget.dataset.repo;
-    const tabs = widget.querySelectorAll(".github-tab");
-    const contentBox = widget.querySelector("#gh-content-box");
-    const branchSelector = widget.querySelector("#gh-branch-selector");
+  const repo = widget.dataset.repo;
+  const teamId = widget.dataset.teamId;
+  const tabs = widget.querySelectorAll(".github-tab");
+  const contentBox = widget.querySelector("#gh-content-box");
+  const branchSelector = widget.querySelector("#gh-branch-selector");
 
-    // -------------------------
-    // 1. Cargar ramas
-    // -------------------------
-    fetch(`${window.TeamHub_BaseUrl || ""}/api/github?repo=${repo}&action=branches`)
-        .then(r => r.json())
-        .then(branches => {
-            branchSelector.innerHTML = "";
-            branches.forEach(b => {
-                const opt = document.createElement("option");
-                opt.value = b.name;
-                opt.textContent = b.name;
-                branchSelector.appendChild(opt);
-            });
-            branchSelector.style.display = "block";
-        });
+  // -------------------------
+  // 1. Cargar ramas
+  // -------------------------
+  fetch(`/api/github?team_id=${teamId}&repo=${repo}&action=branches`)
+    .then((r) => r.json())
+    .then((branches) => {
+      branchSelector.innerHTML = "";
+      if (!Array.isArray(branches)) return;
 
-    // -------------------------
-    // 2. Función para cargar contenido
-    // -------------------------
-    function loadContent(type, branch = "") {
-        contentBox.innerHTML = `
+      branches.forEach((b) => {
+        const opt = document.createElement("option");
+        opt.value = b.name;
+        opt.textContent = b.name;
+        branchSelector.appendChild(opt);
+      });
+
+      branchSelector.style.display = "block";
+    });
+
+  // -------------------------
+  // 2. Función para cargar contenido
+  // -------------------------
+  function loadContent(type, branch = "") {
+    contentBox.innerHTML = `
             <div class="gh-loader">
                 <div class="spinner"></div>
                 <br>Cargando ${type}...
             </div>
         `;
 
-        let url = `${window.TeamHub_BaseUrl || ""}/api/github?repo=${repo}&action=${type}`;
-        if (type === "commits" && branch) {
-            url += `&branch=${branch}`;
-        }
+    let url = `/api/github?team_id=${teamId}&repo=${repo}&action=${type}`;
 
-        fetch(url)
-            .then(r => r.json())
-            .then(data => {
-                renderContent(type, data);
-            });
+    if (type === "commits" && branch) {
+      url += `&branch=${encodeURIComponent(branch)}`;
     }
 
-    // -------------------------
-    // 3. Renderizar contenido
-    // -------------------------
-    function renderContent(type, data) {
-        contentBox.innerHTML = "";
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        renderContent(type, data);
+      })
+      .catch((err) => {
+        console.error(err);
+        contentBox.innerHTML = "<p>Error cargando datos.</p>";
+      });
+  }
 
-        if (!Array.isArray(data) || data.length === 0) {
-            contentBox.innerHTML = "<p>No hay datos disponibles.</p>";
-            return;
-        }
+  // -------------------------
+  // 3. Renderizar contenido
+  // -------------------------
+  function renderContent(type, data) {
+    contentBox.innerHTML = "";
 
-        data.slice(0, 10).forEach(item => {
-            const div = document.createElement("div");
-            div.className = "gh-item";
+    if (!Array.isArray(data) || data.length === 0) {
+      contentBox.innerHTML = "<p>No hay datos disponibles.</p>";
+      return;
+    }
 
-            if (type === "commits") {
-                div.innerHTML = `
-                    <strong>${item.commit.author.name}</strong>
-                    <p>${item.commit.message}</p>
+    data.slice(0, 10).forEach((item) => {
+      const div = document.createElement("div");
+      div.className = "gh-item";
+
+      if (type === "commits") {
+        div.innerHTML = `
+                    <strong>${item.commit?.author?.name || "Autor desconocido"}</strong>
+                    <p>${item.commit?.message || "Sin mensaje"}</p>
                 `;
-            }
+      }
 
-            if (type === "pulls") {
-                div.innerHTML = `
+      if (type === "pulls") {
+        div.innerHTML = `
                     <strong>#${item.number} ${item.title}</strong>
-                    <p>Autor: ${item.user.login}</p>
+                    <p>Autor: ${item.user?.login || "Desconocido"}</p>
                 `;
-            }
+      }
 
-            if (type === "issues") {
-                div.innerHTML = `
+      if (type === "issues") {
+        div.innerHTML = `
                     <strong>#${item.number} ${item.title}</strong>
                     <p>Estado: ${item.state}</p>
                 `;
-            }
+      }
 
-            contentBox.appendChild(div);
-        });
-    }
-
-    // -------------------------
-    // 4. Tabs
-    // -------------------------
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            tabs.forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-
-            const type = tab.dataset.target;
-            loadContent(type, branchSelector.value);
-        });
+      contentBox.appendChild(div);
     });
+  }
 
-    // -------------------------
-    // 5. Cambio de rama
-    // -------------------------
-    branchSelector.addEventListener("change", () => {
-        loadContent("commits", branchSelector.value);
+  // -------------------------
+  // 4. Tabs
+  // -------------------------
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const type = tab.dataset.target;
+      loadContent(type, branchSelector.value);
     });
+  });
 
-    // Cargar commits por defecto
-    loadContent("commits");
+  // -------------------------
+  // 5. Cambio de rama
+  // -------------------------
+  branchSelector.addEventListener("change", () => {
+    loadContent("commits", branchSelector.value);
+  });
+
+  // Cargar commits por defecto
+  loadContent("commits");
 });

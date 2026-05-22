@@ -77,6 +77,13 @@ class TeamModel
         return $stmt->execute([$repo, $team_id]);
     }
 
+    public function guardarTokenGithub($team_id, $token)
+    {
+        $stmt = $this->db->prepare("UPDATE teams SET github_token = ? WHERE id = ?");
+        return $stmt->execute([$token, $team_id]);
+    }
+
+
     /* ============================================================
        OBTENER MIEMBROS DEL EQUIPO
        ============================================================ */

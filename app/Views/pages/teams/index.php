@@ -30,6 +30,17 @@
 
         <div class="admin-grid">
             <?php foreach ($equipos as $equipo): ?>
+
+                <?php
+                // Si es admin o manager, solo mostrar equipos creados por él
+                if (
+                    in_array($_SESSION['user']['role'], ['admin', 'manager'])
+                    && $equipo['created_by'] != $_SESSION['user']['id']
+                ) {
+                    continue;
+                }
+                ?>
+
                 <a href="<?= BASE_PATH ?>/teams/<?= $equipo['id'] ?>" class="admin-card">
                     <div>
                         <div class="admin-card-title">
@@ -44,8 +55,8 @@
                             Estado: <strong><?= htmlspecialchars($equipo['status'] ?? 'En Progreso') ?></strong>
                         </div>
                     </div>
-
                 </a>
+
             <?php endforeach; ?>
         </div>
 

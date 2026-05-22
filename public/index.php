@@ -105,6 +105,11 @@ switch ($uri) {
         (new TeamController())->linkGithub();
         break;
 
+    case '/teams/save-github-token':
+        (new TeamController())->saveGithubToken();
+        break;
+
+
     case '/teams/delete':
         (new TeamController())->delete();
         break;

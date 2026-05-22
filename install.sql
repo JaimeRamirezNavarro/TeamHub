@@ -38,6 +38,10 @@ CREATE TABLE `teams` (
   `gather_space_url` varchar(500) DEFAULT NULL,
   `gather_enabled` tinyint(1) DEFAULT '0',
   `github_repo` varchar(255) DEFAULT NULL,
+
+  -- ⭐ NUEVA COLUMNA AÑADIDA
+  `github_token` TEXT DEFAULT NULL,
+
   `ai_roadmap` LONGTEXT DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,

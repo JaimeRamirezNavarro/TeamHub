@@ -46,46 +46,47 @@ require_once __DIR__ . '/../../Middleware/Auth.php';
     </div>
 
     <!-- Navegación principal -->
-    <div class="sidebar-section-title">Navegación</div>
 
-    <ul class="nav-list">
 
-        <li><a href="/teams" class="project-link">Mis equipos</a></li>
+    <?php if (Auth::hasRole(['admin', 'manager'])): ?>
+        <div class="sidebar-section-title">Navegación</div>
 
-        <?php if (Auth::hasRole(['admin', 'manager'])): ?>
+        <ul class="nav-list">
+
+            <li><a href="/teams" class="project-link">Mis equipos</a></li>
             <li><a href="/teams/all" class="project-link">Todos los equipos</a></li>
         <?php endif; ?>
-    </ul>
+        </ul>
 
-    <!-- Lista de proyectos del usuario -->
-    <div class="sidebar-section-title" style="margin-top:20px;">Mis proyectos</div>
+        <!-- Lista de proyectos del usuario -->
+        <div class="sidebar-section-title" style="margin-top:20px;">Proyecto</div>
 
-    <ul class="project-list">
-        <?php $equipos = $equipos ?? []; ?>
-        <?php foreach ($equipos as $equipo): ?>
-            <li class="project-item">
-                <a href="?team_id=<?= $equipo['id'] ?>"
-                    class="project-link <?= $selected_team_id == $equipo['id'] ? 'active' : '' ?>">
-                    <?= htmlspecialchars($equipo['name']) ?>
-                </a>
-            </li>
-        <?php endforeach; ?>
-    </ul>
+        <ul class="project-list">
+            <?php $equipos = $equipos ?? []; ?>
+            <?php foreach ($equipos as $equipo): ?>
+                <li class="project-item">
+                    <a href="?team_id=<?= $equipo['id'] ?>"
+                        class="project-link <?= $selected_team_id == $equipo['id'] ? 'active' : '' ?>">
+                        <?= htmlspecialchars($equipo['name']) ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
 
-    <!-- Herramientas -->
-    <?php if (Auth::hasRole(['admin', 'manager'])): ?>
-        <div class="sidebar-section-title" style="margin-top:20px;">Herramientas</div>
+        <!-- Herramientas -->
+        <?php if (Auth::hasRole(['admin', 'manager'])): ?>
+            <div class="sidebar-section-title" style="margin-top:20px;">Herramientas</div>
 
-        <a href="/admin" class="project-link" style="display:block; padding:6px 0;">
-            Administrar
-        </a>
-    <?php endif; ?>
+            <a href="/admin" class="project-link" style="display:block; padding:6px 0;">
+                Administrar
+            </a>
+        <?php endif; ?>
 
-    <!-- Logout -->
-    <div style="margin-top:auto; padding-top:20px;">
-        <form method="POST" action="/logout">
-            <button type="submit" name="logout" class="logout-btn">Cerrar sesión</button>
-        </form>
-    </div>
+        <!-- Logout -->
+        <div style="margin-top:auto; padding-top:20px;">
+            <form method="POST" action="/logout">
+                <button type="submit" name="logout" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
 
 </div>

@@ -285,6 +285,37 @@ class TeamController
         exit;
     }
 
+    public function saveGithubToken()
+    {
+        Auth::requireRole(['admin', 'manager']);
+
+        $team_id = $_POST['team_id'] ?? null;
+        $token = trim($_POST['github_token'] ?? '');
+
+        if (!$team_id) {
+            die("Team ID no proporcionado.");
+        }
+
+        $team = $this->teams->obtener($team_id);
+
+        if (!$team) {
+            die("El equipo no existe.");
+        }
+
+        // Si el admin quiere eliminar el token
+        if (isset($_POST['remove_github_token'])) {
+            $token = null;
+        }
+
+        // Guardar o eliminar token
+        $this->teams->guardarTokenGithub($team_id, $token);
+
+        // Redirigir de vuelta al panel del equipo
+        header("Location: " . BASE_PATH . "/teams/" . $team_id);
+        exit;
+    }
+
+
     /* ============================
        UNIRSE A UN EQUIPO
     ============================ */
